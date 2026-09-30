@@ -1,115 +1,1398 @@
 <!DOCTYPE html>
-<html lang="hu" data-theme="dark">
+<html lang="hu" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suli Időzítő - Órák és Szünetek</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
+    <title>Iskolai Számláló & Órarend Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
 
-    <header class="header">
-        <div class="logo">
-            <i class="fa-solid fa-stopwatch"></i> Suli Időzítő
-        </div>
-        <div class="header-controls">
-            <select id="theme-select" onchange="changeTheme(this.value)">
-                <option value="dark">🌙 Sötét</option>
-                <option value="light">☀️ Világos</option>
-                <option value="blue">🌊 Kék</option>
-            </select>
-            <button class="btn btn-outline" onclick="openAdminModal()" id="admin-login-btn">
-                <i class="fa-solid fa-lock"></i> Admin
-            </button>
-            <button class="btn btn-danger hidden" onclick="logoutAdmin()" id="admin-logout-btn">
-                <i class="fa-solid fa-unlock"></i> Kilépés
-            </button>
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-hover:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.15);
+        }
+
+        .glow-indigo {
+            box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.3);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .glow-emerald {
+            box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .glow-amber {
+            box-shadow: 0 0 40px -10px rgba(245, 158, 11, 0.3);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .glow-purple {
+            box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.3);
+            border-color: rgba(168, 85, 247, 0.4);
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.3);
+            border-color: rgba(6, 182, 212, 0.4);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+
+        /* Pulse Animations */
+        @keyframes subtlePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.995); }
+        }
+        .animate-subtle-pulse {
+            animation: subtlePulse 3s infinite ease-in-out;
+        }
+
+        .number-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100 pb-20 md:pb-6">
+
+    <!-- Header Bar -->
+    <header class="sticky top-0 z-30 glass-card border-b border-slate-800 px-4 py-3 md:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <!-- School Info & Title -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
+                        <i data-lucide="graduated-school" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 id="headerSchoolName" class="font-bold text-lg leading-tight text-white tracking-wide">Iskola Neve</h1>
+                        <p class="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            Iskolai Számláló Pro
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons on Mobile Header Right -->
+                <div class="flex items-center gap-2 md:hidden">
+                    <button onclick="toggleAudio()" id="mobileMuteBtn" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition" title="Hangjelzés ki/be">
+                        <i data-lucide="volume-2" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="openProjectorMode()" class="p-2.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 transition" title="Projektor Mód">
+                        <i data-lucide="maximize" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date & Clock Header Display -->
+            <div class="flex items-center justify-between w-full md:w-auto gap-4 bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-2 text-slate-300 font-medium text-sm">
+                    <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i>
+                    <span id="currentDateText">Szerda, Szeptember 30.</span>
+                </div>
+                <div class="h-4 w-[1px] bg-slate-700"></div>
+                <div class="flex items-center gap-2 font-mono text-indigo-300 font-bold text-base">
+                    <i data-lucide="clock" class="w-4 h-4 text-indigo-400"></i>
+                    <span id="currentTimeText">11:15:32</span>
+                </div>
+            </div>
+
+            <!-- Desktop Action Buttons -->
+            <div class="hidden md:flex items-center gap-2">
+                <button onclick="toggleAudio()" id="desktopMuteBtn" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition text-sm font-medium border border-slate-700/50">
+                    <i data-lucide="volume-2" class="w-4 h-4 text-indigo-400" id="desktopMuteIcon"></i>
+                    <span id="desktopMuteLabel">Hang be</span>
+                </button>
+                <button onclick="openProjectorMode()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium text-sm shadow-lg shadow-indigo-500/25 transition border border-indigo-400/30">
+                    <i data-lucide="tv" class="w-4 h-4"></i>
+                    Projektor Mód
+                </button>
+            </div>
+
         </div>
     </header>
 
-    <main class="container">
-        
-        <!-- FŐ ÉLŐ IDŐZÍTŐ KIJELZŐ -->
-        <div class="timer-display">
-            <div id="current-time-clock">12:00:00</div>
-            
-            <div class="status-box">
-                <h2 id="current-event-name">Betöltés...</h2>
-                <div class="countdown-big" id="time-left">--:--</div>
-                <p class="sub-text" id="event-times">--:-- től --:-- ig</p>
-                
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-bar" style="width: 0%;"></div>
-                </div>
-            </div>
-        </div>
+    <!-- Main Content Area -->
+    <div class="max-w-7xl mx-auto w-full px-4 md:px-8 py-6 flex-1 flex flex-col md:flex-row gap-6">
 
-        <!-- CSENGETÉSI REND LISTA -->
-        <div class="schedule-section">
-            <div class="section-header">
-                <h3><i class="fa-solid fa-list"></i> Napi Csengetési Rend</h3>
-                <button class="btn btn-primary hidden admin-only" onclick="openAddModal()">
-                    <i class="fa-solid fa-plus"></i> Új időszak
+        <!-- Sidebar Navigation for Desktop -->
+        <aside class="hidden md:flex flex-col gap-2 w-64 shrink-0">
+            <nav class="glass-card p-3 rounded-2xl flex flex-col gap-1.5 sticky top-24">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-indigo-400 bg-indigo-500/10 border border-indigo-500/20">
+                    <i data-lucide="timer" class="w-5 h-5"></i>
+                    Visszaszámláló
+                </button>
+                <button onclick="switchTab('schedule')" id="nav-schedule" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                    Heti Órarend
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    Beállítások
+                </button>
+
+                <div class="mt-6 pt-4 border-t border-slate-800 px-3">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Mai gyors statisztika</p>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Órák száma:</span>
+                            <span id="sidebarTotalLessons" class="font-semibold text-slate-200">0</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Befejezve:</span>
+                            <span id="sidebarDoneLessons" class="font-semibold text-emerald-400">0</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Hátralévő tanítás:</span>
+                            <span id="sidebarRemainingTime" class="font-semibold text-indigo-400">0 p</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Dynamic Content View Area -->
+        <main class="flex-1 flex flex-col gap-6 min-w-0">
+
+            <!-- TAB 1: DASHBOARD / COUNTER VIEW -->
+            <section id="tab-dashboard-content" class="tab-content flex flex-col gap-6">
+
+                <!-- MAIN HERO COUNTDOWN CARD -->
+                <div id="mainStatusCard" class="glass-card rounded-3xl p-6 md:p-10 relative overflow-hidden transition-all duration-500 glow-indigo border border-indigo-500/30">
+                    <!-- Background Subtle Glow Effect -->
+                    <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none"></div>
+                    <div class="absolute -left-16 -bottom-16 w-64 h-64 rounded-full bg-violet-600/10 blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10 flex flex-col items-center text-center">
+                        
+                        <!-- Status Badge -->
+                        <div id="statusBadge" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-4 animate-subtle-pulse">
+                            <i data-lucide="book-open" class="w-4 h-4" id="statusBadgeIcon"></i>
+                            <span id="statusBadgeText">2. ÓRA</span>
+                        </div>
+
+                        <!-- Current Subject / Event Name -->
+                        <h2 id="currentSubjectTitle" class="text-2xl md:text-4xl font-extrabold text-white mb-1 tracking-tight">
+                            Matematika
+                        </h2>
+                        
+                        <!-- Time Slot Info -->
+                        <p id="currentSubjectTimeRange" class="text-slate-400 text-sm md:text-base font-medium mb-6">
+                            08:55 – 09:40
+                        </p>
+
+                        <!-- Huge Countdown Timer Number -->
+                        <div class="my-2 py-2 px-6 rounded-2xl bg-slate-900/40 border border-slate-800/80 backdrop-blur-md">
+                            <div id="mainCountdownText" class="number-font text-5xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-100 to-indigo-200 drop-shadow-lg">
+                                32:47
+                            </div>
+                            <div id="mainCountdownSubtext" class="text-xs md:text-sm font-medium text-slate-400 mt-1 uppercase tracking-widest">
+                                van hátra
+                            </div>
+                        </div>
+
+                        <!-- Animated Progress Bar -->
+                        <div id="progressContainer" class="w-full max-w-xl mt-6 space-y-2">
+                            <div class="flex justify-between text-xs font-semibold text-slate-400">
+                                <span id="progressStartText">08:55</span>
+                                <span id="progressPercentText" class="text-indigo-400 font-bold">73% eltelt</span>
+                                <span id="progressEndText">09:40</span>
+                            </div>
+                            <div class="w-full bg-slate-900/80 h-3.5 rounded-full p-0.5 border border-slate-800 overflow-hidden">
+                                <div id="mainProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-1000" style="width: 73%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Next Event Preview Banner -->
+                        <div id="nextEventBanner" class="mt-8 pt-6 border-t border-slate-800/80 w-full max-w-xl flex items-center justify-between text-left text-xs md:text-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 rounded-lg bg-slate-800 text-indigo-400">
+                                    <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-xs block">Következő program:</span>
+                                    <span id="nextEventText" class="font-semibold text-slate-200">Szünet (10 perc) • 3. óra: Történelem</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- STATS CARDS GRID -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Stat Card 1 -->
+                    <div class="glass-card glass-card-hover rounded-2xl p-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">Mai órák</span>
+                            <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+                                <i data-lucide="list-checks" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div id="statTotalLessons" class="text-2xl md:text-3xl font-extrabold text-white">6</div>
+                        <span class="text-[11px] text-slate-500 mt-1">Összesen mára</span>
+                    </div>
+
+                    <!-- Stat Card 2 -->
+                    <div class="glass-card glass-card-hover rounded-2xl p-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">Hátralévő</span>
+                            <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                                <i data-lucide="hourglass" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div id="statRemainingLessons" class="text-2xl md:text-3xl font-extrabold text-white">3</div>
+                        <span class="text-[11px] text-slate-500 mt-1">Megtartandó óra</span>
+                    </div>
+
+                    <!-- Stat Card 3 -->
+                    <div class="glass-card glass-card-hover rounded-2xl p-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">Hátra van</span>
+                            <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                                <i data-lucide="clock-arrow-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div id="statRemainingTime" class="text-2xl md:text-3xl font-extrabold text-white">2ó 14p</div>
+                        <span class="text-[11px] text-slate-500 mt-1">Tanítás végi idő</span>
+                    </div>
+
+                    <!-- Stat Card 4 -->
+                    <div class="glass-card glass-card-hover rounded-2xl p-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">Össz tanítás</span>
+                            <div class="p-2 rounded-xl bg-purple-500/10 text-purple-400">
+                                <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div id="statTotalSchoolTime" class="text-2xl md:text-3xl font-extrabold text-white">4ó 30p</div>
+                        <span class="text-[11px] text-slate-500 mt-1">Tiszta óraidő</span>
+                    </div>
+                </div>
+
+                <!-- TODAY'S SCHEDULE LIST -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
+                                <i data-lucide="calendar-check-2" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-white">Mai Órarend</h3>
+                                <p class="text-xs text-slate-400">Valós idejű óra és szünet áttekintő</p>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('schedule')" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 hover:underline">
+                            Heti nézet <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Timeline Container -->
+                    <div id="todayTimetableContainer" class="space-y-3">
+                        <!-- Dynamic items generated via JS -->
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- TAB 2: WEEKLY SCHEDULE VIEW -->
+            <section id="tab-schedule-content" class="tab-content hidden flex-col gap-6">
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="calendar-days" class="w-6 h-6 text-indigo-400"></i>
+                                Heti Teljes Órarend
+                            </h2>
+                            <p class="text-xs text-slate-400">Válassz napot az órarend megtekintéséhez</p>
+                        </div>
+                        
+                        <!-- Day Switcher Tabs -->
+                        <div class="flex items-center gap-1 p-1 bg-slate-900/80 rounded-xl border border-slate-800 overflow-x-auto">
+                            <button onclick="selectWeeklyDay(1)" id="dayTab-1" class="day-tab flex-1 min-w-[70px] py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Hétfő</button>
+                            <button onclick="selectWeeklyDay(2)" id="dayTab-2" class="day-tab flex-1 min-w-[70px] py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Kedd</button>
+                            <button onclick="selectWeeklyDay(3)" id="dayTab-3" class="day-tab flex-1 min-w-[70px] py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Szerda</button>
+                            <button onclick="selectWeeklyDay(4)" id="dayTab-4" class="day-tab flex-1 min-w-[70px] py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Csütörtök</button>
+                            <button onclick="selectWeeklyDay(5)" id="dayTab-5" class="day-tab flex-1 min-w-[70px] py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Péntek</button>
+                        </div>
+                    </div>
+
+                    <!-- Selected Day Timetable Cards -->
+                    <div id="weeklyTimetableContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Dynamic items generated via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: SETTINGS VIEW -->
+            <section id="tab-settings-content" class="tab-content hidden flex-col gap-6">
+                
+                <!-- School Name & Audio Controls Card -->
+                <div class="glass-card rounded-2xl p-6 space-y-6">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-4">
+                        <i data-lucide="sliders" class="w-6 h-6 text-indigo-400"></i>
+                        Általános Beállítások
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- School Name Input -->
+                        <div class="space-y-2">
+                            <label for="schoolNameInput" class="block text-sm font-semibold text-slate-300">
+                                Iskola neve
+                            </label>
+                            <input type="text" id="schoolNameInput" onchange="saveSchoolName()" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-white focus:outline-none focus:border-indigo-500 transition text-sm" placeholder="Pl. Eötvös Loránd Gimnázium">
+                        </div>
+
+                        <!-- Sound Settings & Audio Test -->
+                        <div class="space-y-3">
+                            <label class="block text-sm font-semibold text-slate-300">
+                                Jelzések és Hangok
+                            </label>
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="bell" class="w-5 h-5 text-indigo-400"></i>
+                                    <div>
+                                        <div class="text-sm font-medium text-white">Iskolacsengő hangjelzés</div>
+                                        <div class="text-xs text-slate-400">Csengő megszólalása óra/szünet váltáskor</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="soundToggle" onchange="toggleSoundSetting()" class="w-5 h-5 accent-indigo-500 cursor-pointer">
+                            </div>
+
+                            <button onclick="playTestBell()" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 font-medium text-xs flex items-center justify-center gap-2 border border-slate-700 transition">
+                                <i data-lucide="volume-2" class="w-4 h-4"></i>
+                                Csengő hang próbája
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timetable Schedule Editor Card -->
+                <div class="glass-card rounded-2xl p-6 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="edit-3" class="w-6 h-6 text-indigo-400"></i>
+                                Órarend Szerkesztése
+                            </h2>
+                            <p class="text-xs text-slate-400">Módosítsd az egyes napok óráit és időpontjait</p>
+                        </div>
+
+                        <!-- Editor Day Switcher -->
+                        <div class="flex items-center gap-1 p-1 bg-slate-900/80 rounded-xl border border-slate-800 overflow-x-auto">
+                            <button onclick="selectEditorDay(1)" id="editDayTab-1" class="edit-day-tab flex-1 min-w-[65px] py-1.5 px-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Hét</button>
+                            <button onclick="selectEditorDay(2)" id="editDayTab-2" class="edit-day-tab flex-1 min-w-[65px] py-1.5 px-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Ked</button>
+                            <button onclick="selectEditorDay(3)" id="editDayTab-3" class="edit-day-tab flex-1 min-w-[65px] py-1.5 px-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Sze</button>
+                            <button onclick="selectEditorDay(4)" id="editDayTab-4" class="edit-day-tab flex-1 min-w-[65px] py-1.5 px-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Csüt</button>
+                            <button onclick="selectEditorDay(5)" id="editDayTab-5" class="edit-day-tab flex-1 min-w-[65px] py-1.5 px-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">Pén</button>
+                        </div>
+                    </div>
+
+                    <!-- Editor Lessons List -->
+                    <div id="editorLessonsList" class="space-y-3">
+                        <!-- Dynamic lesson input rows -->
+                    </div>
+
+                    <!-- Add & Action Buttons -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800">
+                        <button onclick="addNewLessonToEditor()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-semibold text-xs flex items-center justify-center gap-2 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            + Új óra hozzáadása
+                        </button>
+
+                        <button onclick="resetDefaultScheduleConfirm()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold text-xs flex items-center justify-center gap-2 transition">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            Alapértelmezett órarend visszaállítása
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-slate-800 px-4 py-2 flex items-center justify-around">
+        <button onclick="switchTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-btn active flex flex-col items-center gap-1 text-indigo-400 p-1">
+            <i data-lucide="timer" class="w-5 h-5"></i>
+            <span class="text-[10px] font-semibold">Számláló</span>
+        </button>
+        <button onclick="switchTab('schedule')" id="mobile-nav-schedule" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 p-1">
+            <i data-lucide="calendar-days" class="w-5 h-5"></i>
+            <span class="text-[10px] font-semibold">Órarend</span>
+        </button>
+        <button onclick="switchTab('settings')" id="mobile-nav-settings" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 p-1">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+            <span class="text-[10px] font-semibold">Beállítások</span>
+        </button>
+    </div>
+
+    <!-- PROJECTOR / FULLSCREEN MINIMAL OVERLAY -->
+    <div id="projectorModal" class="fixed inset-0 z-50 bg-slate-950 text-white flex-col justify-between p-8 md:p-16 hidden">
+        <!-- Top Bar -->
+        <div class="flex items-center justify-between w-full border-b border-slate-800 pb-6">
+            <div class="flex items-center gap-3">
+                <i data-lucide="tv" class="w-8 h-8 text-indigo-500"></i>
+                <span id="projectorSchoolName" class="text-xl md:text-2xl font-bold tracking-wide">Iskola Neve</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <span id="projectorClock" class="font-mono text-xl md:text-2xl text-slate-400 font-semibold">11:15:32</span>
+                <button onclick="closeProjectorMode()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm flex items-center gap-2 border border-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                    Kilépés (ESC)
                 </button>
             </div>
-            
-            <div class="schedule-list" id="schedule-container">
-                <!-- A JS generálja ide az órákat/szüneteket -->
-            </div>
-            
-            <div class="admin-actions hidden admin-only" style="margin-top: 20px; text-align: center;">
-                <button class="btn btn-outline" onclick="resetSchedule()">Gyári csengetési rend visszaállítása</button>
-            </div>
         </div>
 
-    </main>
-
-    <!-- ADMIN BEJELENTKEZŐ MODÁL -->
-    <div id="auth-modal" class="modal-bg hidden">
-        <div class="modal">
-            <button class="close-btn" onclick="closeModal('auth-modal')">&times;</button>
-            <h3>Admin Belépés</h3>
-            <p style="font-size: 0.9rem; margin-bottom: 15px; color: var(--text-muted);">Alapértelmezett PIN: 1234</p>
-            <input type="password" id="pin-input" placeholder="PIN kód">
-            <p id="pin-error" class="error-msg hidden">Hibás PIN kód!</p>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="checkPin()">Belépés</button>
-        </div>
-    </div>
-
-    <!-- IDŐSZAK SZERKESZTŐ / HOZZÁADÓ MODÁL -->
-    <div id="edit-modal" class="modal-bg hidden">
-        <div class="modal">
-            <button class="close-btn" onclick="closeModal('edit-modal')">&times;</button>
-            <h3 id="edit-modal-title">Időszak Szerkesztése</h3>
-            
-            <input type="hidden" id="edit-id">
-            
-            <label>Név (pl. 1. Óra, Szünet)</label>
-            <input type="text" id="edit-name" placeholder="Óra vagy szünet neve">
-            
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <div style="flex: 1;">
-                    <label>Kezdés</label>
-                    <input type="time" id="edit-start" required>
-                </div>
-                <div style="flex: 1;">
-                    <label>Vége</label>
-                    <input type="time" id="edit-end" required>
-                </div>
+        <!-- Central Huge Display -->
+        <div class="flex-1 flex flex-col items-center justify-center text-center py-10">
+            <div id="projectorBadge" class="px-6 py-2 rounded-full bg-indigo-500/20 text-indigo-300 text-xl font-bold uppercase tracking-widest border border-indigo-500/30 mb-6">
+                2. ÓRA
             </div>
-            
-            <label style="margin-top: 10px; display: block;">Típus</label>
-            <select id="edit-type">
-                <option value="class">📚 Tanítási Óra</option>
-                <option value="break">☕ Szünet</option>
-            </select>
 
-            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="saveScheduleItem()">Mentés</button>
+            <h1 id="projectorSubject" class="text-4xl md:text-7xl font-black text-white mb-4 tracking-tight">
+                Matematika
+            </h1>
+
+            <div id="projectorTimer" class="number-font text-7xl md:text-[14rem] font-black leading-none tracking-tight text-indigo-400 my-4 drop-shadow-[0_0_50px_rgba(99,102,241,0.4)]">
+                32:47
+            </div>
+
+            <p id="projectorTimeRange" class="text-xl md:text-3xl text-slate-400 font-medium tracking-wide">
+                08:55 – 09:40
+            </p>
+        </div>
+
+        <!-- Bottom Info -->
+        <div class="w-full text-center border-t border-slate-800 pt-6">
+            <div class="text-slate-400 text-base md:text-lg">
+                Következő: <span id="projectorNextEvent" class="text-white font-bold">Szünet (10 perc) • 3. óra: Történelem</span>
+            </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Default magyar iskola mintarend (Mon-Fri)
+        const DEFAULT_SCHEDULE = {
+            1: [ // Hétfő
+                { name: "Matematika", start: "08:00", end: "08:45" },
+                { name: "Magyar nyelv", start: "08:55", end: "09:40" },
+                { name: "Történelem", start: "09:50", end: "10:35" },
+                { name: "Angol nyelv", start: "10:45", end: "11:30" },
+                { name: "Fizika", start: "11:40", end: "12:25" },
+                { name: "Informatika", start: "12:35", end: "13:20" }
+            ],
+            2: [ // Kedd
+                { name: "Biológia", start: "08:00", end: "08:45" },
+                { name: "Matematika", start: "08:55", end: "09:40" },
+                { name: "Német nyelv", start: "09:50", end: "10:35" },
+                { name: "Magyar irodalom", start: "10:45", end: "11:30" },
+                { name: "Testnevelés", start: "11:40", end: "12:25" },
+                { name: "Kémia", start: "12:35", end: "13:20" }
+            ],
+            3: [ // Szerda
+                { name: "Történelem", start: "08:00", end: "08:45" },
+                { name: "Angol nyelv", start: "08:55", end: "09:40" },
+                { name: "Matematika", start: "09:50", end: "10:35" },
+                { name: "Földrajz", start: "10:45", end: "11:30" },
+                { name: "Magyar nyelv", start: "11:40", end: "12:25" },
+                { name: "Ének-zene", start: "12:35", end: "13:20" },
+                { name: "Osztályfőnöki", start: "13:30", end: "14:15" }
+            ],
+            4: [ // Csütörtök
+                { name: "Fizika", start: "08:00", end: "08:45" },
+                { name: "Kémia", start: "08:55", end: "09:40" },
+                { name: "Magyar irodalom", start: "09:50", end: "10:35" },
+                { name: "Matematika", start: "10:45", end: "11:30" },
+                { name: "Testnevelés", start: "11:40", end: "12:25" },
+                { name: "Rajz és kultúra", start: "12:35", end: "13:20" }
+            ],
+            5: [ // Péntek
+                { name: "Angol nyelv", start: "08:00", end: "08:45" },
+                { name: "Történelem", start: "08:55", end: "09:40" },
+                { name: "Informatika", start: "09:50", end: "10:35" },
+                { name: "Matematika", start: "10:45", end: "11:30" },
+                { name: "Biológia", start: "11:40", end: "12:25" },
+                { name: "Testnevelés", start: "12:35", end: "13:20" }
+            ]
+        };
+
+        // Application State
+        let state = {
+            schoolName: "Eötvös Loránd Gimnázium",
+            soundEnabled: true,
+            schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),
+            activeTab: 'dashboard',
+            selectedWeeklyDay: new Date().getDay() >= 1 && new Date().getDay() <= 5 ? new Date().getDay() : 1,
+            selectedEditorDay: 1,
+            lastStatusKey: null
+        };
+
+        // Load stored state from LocalStorage
+        function loadState() {
+            try {
+                const savedName = localStorage.getItem('szamlalo_school_name');
+                if (savedName) state.schoolName = savedName;
+
+                const savedSound = localStorage.getItem('szamlalo_sound');
+                if (savedSound !== null) state.soundEnabled = savedSound === 'true';
+
+                const savedSchedule = localStorage.getItem('szamlalo_schedule');
+                if (savedSchedule) state.schedule = JSON.parse(savedSchedule);
+            } catch (e) {
+                console.error("LocalStorage load failed:", e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('szamlalo_school_name', state.schoolName);
+                localStorage.setItem('szamlalo_sound', state.soundEnabled.toString());
+                localStorage.setItem('szamlalo_schedule', JSON.stringify(state.schedule));
+            } catch (e) {
+                console.error("LocalStorage save failed:", e);
+            }
+        }
+
+        // Synthesize Realistic School Bell Sound using Web Audio API
+        function playSchoolBellSound() {
+            if (!state.soundEnabled) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const audioCtx = new AudioCtx();
+
+                const now = audioCtx.currentTime;
+                // Dual chime frequencies (e.g. standard school chime note sequence: E5 -> C5 -> D5 -> G4)
+                const notes = [
+                    { freq: 659.25, time: 0 },    // E5
+                    { freq: 523.25, time: 0.35 }, // C5
+                    { freq: 587.33, time: 0.70 }, // D5
+                    { freq: 392.00, time: 1.05 }  // G4
+                ];
+
+                notes.forEach(note => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+                    gain.gain.setValueAtTime(0, now + note.time);
+                    gain.gain.linearRampToValueAtTime(0.3, now + note.time + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + note.time + 1.2);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now + note.time);
+                    osc.stop(now + note.time + 1.3);
+                });
+            } catch (e) {
+                console.error("Audio play error:", e);
+            }
+        }
+
+        function playTestBell() {
+            playSchoolBellSound();
+        }
+
+        // Convert "HH:MM" string to minutes from midnight
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        // Format total seconds into MM:SS or HH:MM:SS string
+        function formatCountdown(totalSeconds) {
+            if (totalSeconds < 0) totalSeconds = 0;
+            const hours = Math.floor(totalSeconds / 3600);
+            const mins = Math.floor((totalSeconds % 3600) / 60);
+            const secs = totalSeconds % 60;
+
+            const pad = (n) => n.toString().padStart(2, '0');
+
+            if (hours > 0) {
+                return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+            }
+            return `${pad(mins)}:${pad(secs)}`;
+        }
+
+        function calculateStatus() {
+            const now = new Date();
+            const currentDay = now.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const currentSecs = currentMins * 60 + now.getSeconds();
+
+            // Check if weekend (Saturday or Sunday)
+            if (currentDay === 0 || currentDay === 6) {
+                // Calculate time until Monday 1st lesson
+                const monLessons = state.schedule[1] || [];
+                const firstMonStartStr = monLessons.length > 0 ? monLessons[0].start : "08:00";
+                const firstMonMins = timeToMinutes(firstMonStartStr);
+
+                // Calculate days remaining to Monday
+                let daysToMon = currentDay === 6 ? 2 : 1;
+                const nextMonDate = new Date(now);
+                nextMonDate.setDate(now.getDate() + daysToMon);
+                nextMonDate.setHours(Math.floor(firstMonMins / 60), firstMonMins % 60, 0, 0);
+
+                const diffSecs = Math.max(0, Math.floor((nextMonDate - now) / 1000));
+
+                return {
+                    stateType: 'WEEKEND',
+                    title: 'Hétvége van! 🎉',
+                    badge: 'HÉT VÉGE',
+                    timeRange: 'Nincs tanítás a mai napon',
+                    countdownSecs: diffSecs,
+                    nextText: `Hétfő 1. óra: ${monLessons[0] ? monLessons[0].name : 'Tanítás'} (${firstMonStartStr})`,
+                    progress: 100,
+                    statusKey: 'WEEKEND'
+                };
+            }
+
+            const todayLessons = state.schedule[currentDay] || [];
+
+            if (todayLessons.length === 0) {
+                return {
+                    stateType: 'NO_LESSONS',
+                    title: 'Nincs tanítás',
+                    badge: 'SZABAD NAP',
+                    timeRange: 'Ma nincsenek órák beállítva',
+                    countdownSecs: 0,
+                    nextText: 'Élvezd a szabadidőt!',
+                    progress: 100,
+                    statusKey: 'NO_LESSONS'
+                };
+            }
+
+            // Sort lessons by start time
+            const sortedLessons = [...todayLessons].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+
+            const firstLessonStartMins = timeToMinutes(sortedLessons[0].start);
+            const lastLessonEndMins = timeToMinutes(sortedLessons[sortedLessons.length - 1].end);
+
+            // 1. Before School starts
+            if (currentMins < firstLessonStartMins) {
+                const targetSecs = firstLessonStartMins * 60;
+                const remainingSecs = targetSecs - currentSecs;
+
+                return {
+                    stateType: 'BEFORE_SCHOOL',
+                    title: 'Jó reggelt! 👋',
+                    badge: 'TANÍTÁS ELŐTT',
+                    timeRange: `Első óra: ${sortedLessons[0].start} (${sortedLessons[0].name})`,
+                    countdownSecs: remainingSecs,
+                    nextText: `1. óra – ${sortedLessons[0].name} (${sortedLessons[0].start} - ${sortedLessons[0].end})`,
+                    progress: 0,
+                    statusKey: 'BEFORE_SCHOOL'
+                };
+            }
+
+            // 2. After School ends
+            if (currentMins >= lastLessonEndMins) {
+                return {
+                    stateType: 'AFTER_SCHOOL',
+                    title: 'Vége a tanításnak! 🎉',
+                    badge: 'TANÍTÁS UTÁN',
+                    timeRange: `Összesen ${sortedLessons.length} órád volt ma`,
+                    countdownSecs: 0,
+                    nextText: 'Szép délutánt! A mai nap befejeződött.',
+                    progress: 100,
+                    statusKey: 'AFTER_SCHOOL'
+                };
+            }
+
+            // 3. During School Hours (Lesson or Break)
+            for (let i = 0; i < sortedLessons.length; i++) {
+                const lesson = sortedLessons[i];
+                const startMins = timeToMinutes(lesson.start);
+                const endMins = timeToMinutes(lesson.end);
+
+                // Check if in current lesson
+                if (currentMins >= startMins && currentMins < endMins) {
+                    const startSecs = startMins * 60;
+                    const endSecs = endMins * 60;
+                    const totalDurationSecs = endSecs - startSecs;
+                    const elapsedSecs = currentSecs - startSecs;
+                    const remainingSecs = endSecs - currentSecs;
+                    const progressPercent = Math.min(100, Math.max(0, Math.round((elapsedSecs / totalDurationSecs) * 100)));
+
+                    let nextEventText = "Nincs több óra ma";
+                    if (i < sortedLessons.length - 1) {
+                        const nextLesson = sortedLessons[i + 1];
+                        const breakDuration = timeToMinutes(nextLesson.start) - endMins;
+                        nextEventText = `Szünet (${breakDuration} perc) • ${i + 2}. óra: ${nextLesson.name}`;
+                    } else {
+                        nextEventText = "Utolsó óra! Ezután vége a tanításnak 🎉";
+                    }
+
+                    return {
+                        stateType: 'LESSON',
+                        title: lesson.name,
+                        badge: `${i + 1}. ÓRA`,
+                        timeRange: `${lesson.start} – ${lesson.end}`,
+                        countdownSecs: remainingSecs,
+                        nextText: nextEventText,
+                        progress: progressPercent,
+                        startStr: lesson.start,
+                        endStr: lesson.end,
+                        lessonIndex: i,
+                        statusKey: `LESSON_${i}`
+                    };
+                }
+
+                // Check if in break between lesson i and lesson i+1
+                if (i < sortedLessons.length - 1) {
+                    const nextLesson = sortedLessons[i + 1];
+                    const nextStartMins = timeToMinutes(nextLesson.start);
+
+                    if (currentMins >= endMins && currentMins < nextStartMins) {
+                        const breakStartSecs = endMins * 60;
+                        const breakEndSecs = nextStartMins * 60;
+                        const totalBreakSecs = breakEndSecs - breakStartSecs;
+                        const elapsedSecs = currentSecs - breakStartSecs;
+                        const remainingSecs = breakEndSecs - currentSecs;
+                        const progressPercent = Math.min(100, Math.max(0, Math.round((elapsedSecs / totalBreakSecs) * 100)));
+                        const breakLengthMins = nextStartMins - endMins;
+
+                        return {
+                            stateType: 'BREAK',
+                            title: 'SZÜNET',
+                            badge: `SZÜNET (${breakLengthMins} PERC)`,
+                            timeRange: `${lesson.end} – ${nextLesson.start}`,
+                            countdownSecs: remainingSecs,
+                            nextText: `Következő: ${i + 2}. óra – ${nextLesson.name}`,
+                            progress: progressPercent,
+                            startStr: lesson.end,
+                            endStr: nextLesson.start,
+                            statusKey: `BREAK_${i}`
+                        };
+                    }
+                }
+            }
+
+            return {
+                stateType: 'UNKNOWN',
+                title: 'Számláló',
+                badge: 'INFO',
+                timeRange: '',
+                countdownSecs: 0,
+                nextText: '',
+                progress: 0,
+                statusKey: 'UNKNOWN'
+            };
+        }
+
+        function updateUI() {
+            const now = new Date();
+
+            // 1. Update Header Clock & Date
+            const dayNames = ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'];
+            const monthNames = ['január', 'február', 'március', 'április', 'május', 'június', 'július', 'augusztus', 'szeptember', 'október', 'november', 'december'];
+            
+            const dateString = `${dayNames[now.getDay()]}, ${monthNames[now.getMonth()]} ${now.getDate()}.`;
+            const timeString = now.toTimeString().split(' ')[0];
+
+            document.getElementById('currentDateText').innerText = dateString;
+            document.getElementById('currentTimeText').innerText = timeString;
+            document.getElementById('projectorClock').innerText = timeString;
+
+            // 2. Calculate Current School Status
+            const status = calculateStatus();
+
+            // Trigger bell if status key changed and not initial state
+            if (state.lastStatusKey && state.lastStatusKey !== status.statusKey) {
+                playSchoolBellSound();
+            }
+            state.lastStatusKey = status.statusKey;
+
+            // 3. Update Hero Card Styling based on status
+            const card = document.getElementById('mainStatusCard');
+            const badge = document.getElementById('statusBadge');
+            const badgeText = document.getElementById('statusBadgeText');
+            const title = document.getElementById('currentSubjectTitle');
+            const timeRange = document.getElementById('currentSubjectTimeRange');
+            const countdownText = document.getElementById('mainCountdownText');
+            const progressBar = document.getElementById('mainProgressBar');
+            const progressPercentText = document.getElementById('progressPercentText');
+            const progressStartText = document.getElementById('progressStartText');
+            const progressEndText = document.getElementById('progressEndText');
+            const nextEventText = document.getElementById('nextEventText');
+
+            // Apply specific visual theme per state
+            card.className = 'glass-card rounded-3xl p-6 md:p-10 relative overflow-hidden transition-all duration-500 border ';
+            if (status.stateType === 'LESSON') {
+                card.classList.add('glow-indigo', 'border-indigo-500/30');
+                badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-4 animate-subtle-pulse';
+            } else if (status.stateType === 'BREAK') {
+                card.classList.add('glow-emerald', 'border-emerald-500/30');
+                badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-4 animate-subtle-pulse';
+            } else if (status.stateType === 'BEFORE_SCHOOL') {
+                card.classList.add('glow-amber', 'border-amber-500/30');
+                badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-4 animate-subtle-pulse';
+            } else if (status.stateType === 'AFTER_SCHOOL') {
+                card.classList.add('glow-cyan', 'border-cyan-500/30');
+                badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 mb-4';
+            } else { // WEEKEND
+                card.classList.add('glow-purple', 'border-purple-500/30');
+                badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 mb-4';
+            }
+
+            badgeText.innerText = status.badge;
+            title.innerText = status.title;
+            timeRange.innerText = status.timeRange;
+            countdownText.innerText = formatCountdown(status.countdownSecs);
+            nextEventText.innerText = status.nextText;
+
+            // Update Progress Bar
+            progressBar.style.width = `${status.progress}%`;
+            progressPercentText.innerText = `${status.progress}% eltelt`;
+            progressStartText.innerText = status.startStr || '';
+            progressEndText.innerText = status.endStr || '';
+
+            // 4. Update Projector Overlay Elements
+            document.getElementById('projectorBadge').innerText = status.badge;
+            document.getElementById('projectorSubject').innerText = status.title;
+            document.getElementById('projectorTimer').innerText = formatCountdown(status.countdownSecs);
+            document.getElementById('projectorTimeRange').innerText = status.timeRange;
+            document.getElementById('projectorNextEvent').innerText = status.nextText;
+
+            // 5. Update Statistics & Today Timetable
+            updateStatsAndTodayList();
+        }
+
+        function updateStatsAndTodayList() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+
+            const todayLessons = (currentDay >= 1 && currentDay <= 5) ? (state.schedule[currentDay] || []) : [];
+            const sortedLessons = [...todayLessons].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+
+            let totalLessons = sortedLessons.length;
+            let remainingLessons = 0;
+            let doneLessons = 0;
+            let totalSchoolMinutes = 0;
+            let remainingSchoolMinutes = 0;
+
+            sortedLessons.forEach(lesson => {
+                const startMins = timeToMinutes(lesson.start);
+                const endMins = timeToMinutes(lesson.end);
+                const duration = endMins - startMins;
+
+                totalSchoolMinutes += duration;
+
+                if (currentMins >= endMins) {
+                    doneLessons++;
+                } else if (currentMins < startMins) {
+                    remainingLessons++;
+                    remainingSchoolMinutes += duration;
+                } else {
+                    // Currently ongoing
+                    remainingLessons++;
+                    remainingSchoolMinutes += (endMins - currentMins);
+                }
+            });
+
+            // Format stats UI
+            document.getElementById('statTotalLessons').innerText = totalLessons;
+            document.getElementById('statRemainingLessons').innerText = remainingLessons;
+            document.getElementById('sidebarTotalLessons').innerText = totalLessons;
+            document.getElementById('sidebarDoneLessons').innerText = doneLessons;
+
+            const formatHoursMins = (mins) => {
+                const h = Math.floor(mins / 60);
+                const m = mins % 60;
+                return h > 0 ? `${h}ó ${m}p` : `${m}p`;
+            };
+
+            document.getElementById('statRemainingTime').innerText = formatHoursMins(remainingSchoolMinutes);
+            document.getElementById('statTotalSchoolTime').innerText = formatHoursMins(totalSchoolMinutes);
+            document.getElementById('sidebarRemainingTime').innerText = formatHoursMins(remainingSchoolMinutes);
+
+            // Render Today's Timetable List
+            renderTodayTimetableList(sortedLessons, currentMins);
+        }
+
+        function renderTodayTimetableList(lessons, currentMins) {
+            const container = document.getElementById('todayTimetableContainer');
+            if (!container) return;
+
+            if (lessons.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-500 text-sm">
+                        Nincsenek órák a mai napon.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            lessons.forEach((lesson, index) => {
+                const startMins = timeToMinutes(lesson.start);
+                const endMins = timeToMinutes(lesson.end);
+
+                const isDone = currentMins >= endMins;
+                const isCurrent = currentMins >= startMins && currentMins < endMins;
+
+                let itemClass = "p-4 rounded-xl border flex items-center justify-between transition-all ";
+                let badgeHtml = '';
+
+                if (isCurrent) {
+                    itemClass += "bg-indigo-600/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10 scale-[1.01]";
+                    badgeHtml = `<span class="px-2.5 py-1 rounded-full bg-indigo-500 text-white text-[10px] font-bold uppercase tracking-wider animate-pulse">Aktuális</span>`;
+                } else if (isDone) {
+                    itemClass += "bg-slate-900/40 border-slate-800 opacity-60";
+                    badgeHtml = `<span class="flex items-center gap-1 text-emerald-400 text-xs font-semibold"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Kész</span>`;
+                } else {
+                    itemClass += "bg-slate-900/60 border-slate-800 hover:border-slate-700";
+                    badgeHtml = `<span class="text-slate-400 text-xs font-medium">Következő</span>`;
+                }
+
+                html += `
+                    <div class="${itemClass}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-sm font-mono font-bold ${isCurrent ? 'text-indigo-300 bg-indigo-500/30' : 'text-slate-400'}">
+                                ${index + 1}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm ${isCurrent ? 'text-white text-base' : 'text-slate-200'}">${lesson.name}</h4>
+                                <p class="text-xs text-slate-400 font-mono">${lesson.start} — ${lesson.end}</p>
+                            </div>
+                        </div>
+                        <div>
+                            ${badgeHtml}
+                        </div>
+                    </div>
+                `;
+
+                // Render Break separator if not last item
+                if (index < lessons.length - 1) {
+                    const nextLesson = lessons[index + 1];
+                    const nextStartMins = timeToMinutes(nextLesson.start);
+                    const isBreakCurrent = currentMins >= endMins && currentMins < nextStartMins;
+                    const breakDuration = nextStartMins - endMins;
+
+                    if (breakDuration > 0) {
+                        html += `
+                            <div class="px-4 py-2 my-1 rounded-lg border border-dashed ${isBreakCurrent ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' : 'border-slate-800 text-slate-500'} flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="coffee" class="w-3.5 h-3.5"></i>
+                                    <span class="font-semibold">SZÜNET (${breakDuration} perc)</span>
+                                </div>
+                                <span class="font-mono">${lesson.end} — ${nextLesson.start}</span>
+                            </div>
+                        `;
+                    }
+                }
+            });
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function selectWeeklyDay(dayIndex) {
+            state.selectedWeeklyDay = dayIndex;
+            
+            // Update Tab active styling
+            for (let i = 1; i <= 5; i++) {
+                const tab = document.getElementById(`dayTab-${i}`);
+                if (tab) {
+                    if (i === dayIndex) {
+                        tab.className = "day-tab flex-1 min-w-[70px] py-2 px-3 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+                    } else {
+                        tab.className = "day-tab flex-1 min-w-[70px] py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+                    }
+                }
+            }
+
+            renderWeeklyTimetable();
+        }
+
+        function renderWeeklyTimetable() {
+            const container = document.getElementById('weeklyTimetableContainer');
+            if (!container) return;
+
+            const dayLessons = state.schedule[state.selectedWeeklyDay] || [];
+
+            if (dayLessons.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-12 text-slate-500 text-sm">
+                        Ezen a napon nincsenek tanórák rögzítve.
+                    </div>
+                `;
+                return;
+            }
+
+            const sorted = [...dayLessons].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+
+            let html = '';
+            sorted.forEach((lesson, idx) => {
+                html += `
+                    <div class="glass-card p-4 rounded-xl flex items-center justify-between border border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold flex items-center justify-center font-mono">
+                                ${idx + 1}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">${lesson.name}</h4>
+                                <span class="text-xs text-slate-400 font-mono">${lesson.start} — ${lesson.end}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-medium">
+                            ${timeToMinutes(lesson.end) - timeToMinutes(lesson.start)} perc
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function selectEditorDay(dayIndex) {
+            state.selectedEditorDay = dayIndex;
+
+            for (let i = 1; i <= 5; i++) {
+                const tab = document.getElementById(`editDayTab-${i}`);
+                if (tab) {
+                    if (i === dayIndex) {
+                        tab.className = "edit-day-tab flex-1 min-w-[65px] py-1.5 px-2.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+                    } else {
+                        tab.className = "edit-day-tab flex-1 min-w-[65px] py-1.5 px-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+                    }
+                }
+            }
+
+            renderScheduleEditor();
+        }
+
+        function renderScheduleEditor() {
+            const container = document.getElementById('editorLessonsList');
+            if (!container) return;
+
+            const lessons = state.schedule[state.selectedEditorDay] || [];
+
+            if (lessons.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-slate-500 text-sm">
+                        Ezen a napon még nincs óra. Kattints az "+ Új óra hozzáadása" gombra!
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            lessons.forEach((lesson, index) => {
+                html += `
+                    <div class="flex flex-col sm:flex-row items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <div class="w-7 h-7 rounded-lg bg-slate-800 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0">
+                            ${index + 1}
+                        </div>
+
+                        <!-- Subject Name Input -->
+                        <div class="flex-1 w-full">
+                            <input type="text" value="${lesson.name}" onchange="updateLessonField(${index}, 'name', this.value)" class="w-full px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500" placeholder="Tantárgy neve">
+                        </div>
+
+                        <!-- Time Inputs -->
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <input type="time" value="${lesson.start}" onchange="updateLessonField(${index}, 'start', this.value)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-indigo-500">
+                            <span class="text-slate-500 text-xs">—</span>
+                            <input type="time" value="${lesson.end}" onchange="updateLessonField(${index}, 'end', this.value)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-indigo-500">
+                        </div>
+
+                        <!-- Move Up/Down & Delete Action Buttons -->
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="moveLesson(${index}, -1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}">
+                                <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="moveLesson(${index}, 1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition ${index === lessons.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}">
+                                <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteLesson(${index})" class="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function updateLessonField(index, field, value) {
+            if (state.schedule[state.selectedEditorDay] && state.schedule[state.selectedEditorDay][index]) {
+                state.schedule[state.selectedEditorDay][index][field] = value;
+                saveState();
+                updateUI();
+            }
+        }
+
+        function addNewLessonToEditor() {
+            if (!state.schedule[state.selectedEditorDay]) {
+                state.schedule[state.selectedEditorDay] = [];
+            }
+            const dayLessons = state.schedule[state.selectedEditorDay];
+            
+            let defaultStart = "08:00";
+            let defaultEnd = "08:45";
+
+            if (dayLessons.length > 0) {
+                const last = dayLessons[dayLessons.length - 1];
+                const lastEndMins = timeToMinutes(last.end);
+                const newStartMins = lastEndMins + 10;
+                const newEndMins = newStartMins + 45;
+
+                const pad = (n) => n.toString().padStart(2, '0');
+                defaultStart = `${pad(Math.floor(newStartMins / 60))}:${pad(newStartMins % 60)}`;
+                defaultEnd = `${pad(Math.floor(newEndMins / 60))}:${pad(newEndMins % 60)}`;
+            }
+
+            dayLessons.push({
+                name: "Új tantárgy",
+                start: defaultStart,
+                end: defaultEnd
+            });
+
+            saveState();
+            renderScheduleEditor();
+            renderWeeklyTimetable();
+            updateUI();
+        }
+
+        function deleteLesson(index) {
+            if (state.schedule[state.selectedEditorDay]) {
+                state.schedule[state.selectedEditorDay].splice(index, 1);
+                saveState();
+                renderScheduleEditor();
+                renderWeeklyTimetable();
+                updateUI();
+            }
+        }
+
+        function moveLesson(index, direction) {
+            const list = state.schedule[state.selectedEditorDay];
+            if (!list) return;
+
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= list.length) return;
+
+            const temp = list[index];
+            list[index] = list[newIndex];
+            list[newIndex] = temp;
+
+            saveState();
+            renderScheduleEditor();
+            renderWeeklyTimetable();
+            updateUI();
+        }
+
+        function saveSchoolName() {
+            const val = document.getElementById('schoolNameInput').value.trim();
+            if (val) {
+                state.schoolName = val;
+                document.getElementById('headerSchoolName').innerText = val;
+                document.getElementById('projectorSchoolName').innerText = val;
+                saveState();
+            }
+        }
+
+        function toggleSoundSetting() {
+            state.soundEnabled = document.getElementById('soundToggle').checked;
+            updateMuteButtonUI();
+            saveState();
+        }
+
+        function toggleAudio() {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('soundToggle').checked = state.soundEnabled;
+            updateMuteButtonUI();
+            saveState();
+        }
+
+        function updateMuteButtonUI() {
+            const desktopLabel = document.getElementById('desktopMuteLabel');
+            const desktopIcon = document.getElementById('desktopMuteIcon');
+
+            if (state.soundEnabled) {
+                desktopLabel.innerText = "Hang be";
+                desktopIcon.setAttribute('data-lucide', 'volume-2');
+            } else {
+                desktopLabel.innerText = "Néma";
+                desktopIcon.setAttribute('data-lucide', 'volume-x');
+            }
+            lucide.createIcons();
+        }
+
+        function resetDefaultScheduleConfirm() {
+            if (window.confirm("Biztosan visszaállítod az alapértelmezett mintarendet? Minden egyedi módosítás törlődik.")) {
+                state.schedule = JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
+                saveState();
+                renderScheduleEditor();
+                renderWeeklyTimetable();
+                updateUI();
+            }
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            // Show target tab content
+            const target = document.getElementById(`tab-${tabId}-content`);
+            if (target) target.classList.remove('hidden');
+
+            // Update Desktop Nav Buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50";
+            });
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.className = "nav-btn active flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-indigo-400 bg-indigo-500/10 border border-indigo-500/20";
+            }
+
+            // Update Mobile Bottom Nav Buttons
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                btn.className = "mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 p-1";
+            });
+            const activeMobileNav = document.getElementById(`mobile-nav-${tabId}`);
+            if (activeMobileNav) {
+                activeMobileNav.className = "mobile-nav-btn active flex flex-col items-center gap-1 text-indigo-400 p-1";
+            }
+
+            if (tabId === 'schedule') renderWeeklyTimetable();
+            if (tabId === 'settings') renderScheduleEditor();
+        }
+
+        function openProjectorMode() {
+            const modal = document.getElementById('projectorModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        }
+
+        function closeProjectorMode() {
+            const modal = document.getElementById('projectorModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // Close projector overlay on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeProjectorMode();
+            }
+        });
+
+        window.onload = function() {
+            loadState();
+
+            // Set initial school name in input and header
+            document.getElementById('schoolNameInput').value = state.schoolName;
+            document.getElementById('headerSchoolName').innerText = state.schoolName;
+            document.getElementById('projectorSchoolName').innerText = state.schoolName;
+
+            // Set sound toggle UI
+            document.getElementById('soundToggle').checked = state.soundEnabled;
+            updateMuteButtonUI();
+
+            // Initialize day tab selections
+            selectWeeklyDay(state.selectedWeeklyDay);
+            selectEditorDay(state.selectedEditorDay);
+
+            // Initial UI render
+            updateUI();
+
+            // Start 1-second interval loop
+            setInterval(updateUI, 1000);
+
+            // Initialize Lucide icons
+            lucide.createIcons();
+        };
+    </script>
 </body>
 </html>
