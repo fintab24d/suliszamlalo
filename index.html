@@ -3,36 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuliHub Ultra - Osztály Központ</title>
-    <!-- CSS hivatkozás -->
+    <title>SuliDash - Számláló Központ</title>
     <link rel="stylesheet" href="style.css">
-    <!-- FontAwesome Ikonok -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Felső Fejléc -->
+    <!-- Fejléc -->
     <header class="navbar">
         <div class="nav-container">
             <div class="brand">
-                <div class="brand-icon"><i class="fa-solid fa-rocket"></i></div>
+                <div class="brand-icon"><i class="fa-solid fa-calculator"></i></div>
                 <div>
-                    <h1>SuliHub <span class="badge-ultra">ULTRA</span></h1>
-                    <p id="live-clock">2026.09.30 | 10:00:00</p>
+                    <h1>SuliDash</h1>
+                    <p class="subtext">Osztály Számláló Központ</p>
                 </div>
             </div>
 
             <div class="nav-actions">
-                <!-- Témaváltó -->
                 <select id="theme-select" onchange="changeTheme(this.value)" class="theme-dropdown">
-                    <option value="cyber">⚡ Cyber Neon</option>
-                    <option value="sunset">🌅 Sunset Gold</option>
-                    <option value="mint">🌿 Mint Fresh</option>
+                    <option value="cyber">⚡ Cyber (Sötét)</option>
+                    <option value="sunset">🌅 Sunset (Meleg)</option>
+                    <option value="light">☁️ Light (Világos)</option>
                 </select>
 
-                <!-- Admin Státusz -->
                 <div id="admin-status" class="status-badge guest">
                     <i class="fa-solid fa-user"></i> <span>Vendég</span>
                 </div>
@@ -40,228 +35,121 @@
                 <button id="auth-btn" onclick="openModal('auth-modal')" class="btn btn-primary">
                     <i class="fa-solid fa-lock" id="auth-icon"></i> <span id="auth-text">Admin</span>
                 </button>
+                
+                <!-- Admin Beállítások Gomb -->
+                <button onclick="openModal('settings-modal')" class="btn btn-outline btn-admin-only hidden" title="Beállítások">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Fő Bento Grid Konténer -->
-    <main class="bento-container">
+    <!-- Fő tartalom -->
+    <main class="main-container">
+        
+        <!-- Eszköztár (Keresés, Szűrés) -->
+        <div class="toolbar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Keresés a számlálók között..." oninput="renderCounters()">
+            </div>
+            
+            <div class="filters">
+                <select id="category-filter" onchange="renderCounters()">
+                    <option value="all">Minden kategória</option>
+                    <option value="study">📚 Tanulás & Jegyek</option>
+                    <option value="behavior">⚠️ Fegyelem & Késés</option>
+                    <option value="fun">🎉 Közösség & Móka</option>
+                </select>
+                
+                <select id="sort-select" onchange="renderCounters()">
+                    <option value="newest">Legújabb elöl</option>
+                    <option value="highest">Legmagasabb érték</option>
+                    <option value="lowest">Legalacsonyabb érték</option>
+                </select>
 
-        <!-- 1. KÁRTYA: Élő Csengetési Rend + Csengő Hangeffekt -->
-        <div class="bento-card card-bell">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-bell text-gold"></i> Csengetési Rend</span>
-                <button onclick="playSchoolBell()" class="btn-bell-sound" title="Iskolacsengő teszt">
-                    <i class="fa-solid fa-volume-high"></i> Csengő
+                <button onclick="openModal('counter-modal')" class="btn btn-emerald btn-admin-only hidden">
+                    <i class="fa-solid fa-plus"></i> Új Számláló
                 </button>
             </div>
-            <div class="card-body">
-                <div class="bell-status">
-                    <h2 id="lesson-status-title">Betöltés...</h2>
-                    <div id="lesson-countdown" class="big-timer">--:--</div>
-                    <p id="lesson-subtext" class="subtext">Következő esemény kiszámítása...</p>
-                </div>
-                <div class="progress-bar-container">
-                    <div id="lesson-progress" class="progress-bar" style="width: 0%"></div>
-                </div>
-            </div>
         </div>
 
-        <!-- 2. KÁRTYA: Többszörös Esemény Visszaszámláló HUB -->
-        <div class="bento-card card-events">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-hourglass-half text-cyan"></i> D-Day Visszaszámlálók</span>
-                <button onclick="openModal('event-modal')" class="btn-admin-only btn-sm btn-cyan hidden">+ Új Esemény</button>
-            </div>
-            <div class="card-body scrollable" id="events-container">
-                <!-- JS írja be -->
-            </div>
-        </div>
-
-        <!-- 3. KÁRTYA: Post-it / Osztály Hirdetőtábla -->
-        <div class="bento-card card-noticeboard">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-note-sticky text-amber"></i> Üzenőfal & Info</span>
-                <button onclick="openModal('notice-modal')" class="btn-admin-only btn-sm btn-amber hidden">+ Post-it</button>
-            </div>
-            <div class="card-body notice-grid scrollable" id="notices-container">
-                <!-- JS írja be -->
-            </div>
-        </div>
-
-        <!-- 4. KÁRTYA: Osztály Számlálók (+1 / -1) -->
-        <div class="bento-card card-counters col-span-2">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-calculator text-emerald"></i> Élő Osztály Számlálók</span>
-                <button onclick="openModal('counter-modal')" class="btn-admin-only btn-sm btn-emerald hidden">+ Új Számláló</button>
-            </div>
-            <div class="card-body counters-grid" id="counters-container">
-                <!-- JS írja be -->
-            </div>
-        </div>
-
-        <!-- 5. KÁRTYA: Interaktív Órarend (Hétfő-Péntek) -->
-        <div class="bento-card card-timetable col-span-2">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-calendar-days text-purple"></i> Hetirend & Órarend</span>
-                <div class="timetable-controls">
-                    <div class="day-selector" id="day-tabs">
-                        <button class="tab-btn active" onclick="selectDay('Hétfő')">H</button>
-                        <button class="tab-btn" onclick="selectDay('Kedd')">K</button>
-                        <button class="tab-btn" onclick="selectDay('Szerda')">Sze</button>
-                        <button class="tab-btn" onclick="selectDay('Csütörtök')">Cs</button>
-                        <button class="tab-btn" onclick="selectDay('Péntek')">P</button>
-                    </div>
-                    <button onclick="openModal('timetable-modal')" class="btn-admin-only btn-sm btn-purple hidden">+ Óra</button>
-                </div>
-            </div>
-            <div class="card-body scrollable" id="timetable-container">
-                <!-- JS írja be -->
-            </div>
-        </div>
-
-        <!-- 6. KÁRTYA: Témazárók & Feladat Tracker -->
-        <div class="bento-card card-tasks">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-pen-to-square text-rose"></i> Témazárók & Feladatok</span>
-                <button onclick="openModal('task-modal')" class="btn-admin-only btn-sm btn-rose hidden">+ Új Feladat</button>
-            </div>
-            <div class="card-body scrollable" id="tasks-container">
-                <!-- JS írja be -->
-            </div>
-        </div>
-
-        <!-- 7. KÁRTYA: Jegyátlag & Céljegy Számológép -->
-        <div class="bento-card card-calculator">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-chart-line text-sky"></i> Jegyátlag Számoló</span>
-            </div>
-            <div class="card-body">
-                <div class="calc-inputs">
-                    <input type="text" id="grade-inputs" placeholder="Jegyeid (pl: 5, 4, 5, 3)" oninput="calculateGrades()">
-                    <input type="number" id="target-grade" placeholder="Célátlag (pl: 4.5)" step="0.1" oninput="calculateGrades()">
-                </div>
-                <div class="calc-results">
-                    <div class="res-box"><span>Jelenlegi Átlag:</span> <strong id="res-avg">--</strong></div>
-                    <div class="res-box"><span>Szükséges 5-ösök:</span> <strong id="res-needed" class="text-emerald">--</strong></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 8. KÁRTYA: Admin Panel & Adatkezelés -->
-        <div class="bento-card card-settings btn-admin-only hidden">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-gears text-gold"></i> Admin Vezérlőpult</span>
-            </div>
-            <div class="card-body flex-row gap-2">
-                <button onclick="changePinCode()" class="btn btn-outline"><i class="fa-solid fa-key"></i> PIN Módosítása</button>
-                <button onclick="exportData()" class="btn btn-outline"><i class="fa-solid fa-download"></i> Mentés JSON</button>
-                <button onclick="document.getElementById('import-file').click()" class="btn btn-outline"><i class="fa-solid fa-upload"></i> Betöltés JSON</button>
-                <input type="file" id="import-file" style="display:none" onchange="importData(event)">
-                <button onclick="resetToDefault()" class="btn btn-danger"><i class="fa-solid fa-rotate-left"></i> Gyári Visszaállítás</button>
-            </div>
+        <!-- Számlálók Rácsa -->
+        <div class="counters-grid" id="counters-container">
+            <!-- A JavaScript ide generálja a kártyákat -->
         </div>
 
     </main>
 
-    <!-- MODÁLOK (Párbeszédablakok) -->
+    <!-- ================= MODÁLOK ================= -->
 
-    <!-- Auth / PIN Modal -->
+    <!-- Admin Bejelentkezés Modal -->
     <div id="auth-modal" class="modal-backdrop hidden">
         <div class="modal">
             <button onclick="closeModal('auth-modal')" class="modal-close">&times;</button>
-            <h3><i class="fa-solid fa-shield-halved text-cyan"></i> Admin Bejelentkezés</h3>
-            <p class="subtext">Add meg az Admin PIN kódot a szerkesztéshez! (Alapértelmezett: <strong>1234</strong>)</p>
+            <h3><i class="fa-solid fa-shield-halved text-primary"></i> Admin Belépés</h3>
+            <p class="subtext">Szerkesztéshez add meg a PIN kódot (Alap: <strong>1234</strong>)</p>
             <form onsubmit="handleAuthSubmit(event)">
-                <input type="password" id="pin-input" placeholder="PIN Kód" maxlength="8" required autofocus>
+                <input type="password" id="pin-input" placeholder="PIN Kód" required autofocus>
                 <div id="auth-error" class="error-msg hidden">Hibás PIN kód!</div>
                 <button type="submit" class="btn btn-primary w-full mt-3">Belépés</button>
             </form>
         </div>
     </div>
 
-    <!-- Új Számláló Modal -->
+    <!-- Új/Szerkesztés Számláló Modal -->
     <div id="counter-modal" class="modal-backdrop hidden">
         <div class="modal">
             <button onclick="closeModal('counter-modal')" class="modal-close">&times;</button>
-            <h3>Új Számláló</h3>
+            <h3 id="modal-counter-title">Új Számláló</h3>
             <form onsubmit="saveCounter(event)">
-                <input type="text" id="counter-title-input" placeholder="Cím (pl. Késések)" required>
-                <input type="text" id="counter-icon-input" placeholder="Emoji Ikon (pl. ⏰)" value="⭐" required>
-                <input type="number" id="counter-val-input" placeholder="Kezdőérték" value="0" required>
-                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
-            </form>
-        </div>
-    </div>
+                <input type="hidden" id="c-id">
+                <input type="text" id="c-title" placeholder="Megnevezés (pl. Késések)" required>
+                
+                <div class="flex-row">
+                    <input type="text" id="c-icon" placeholder="Emoji (pl. ⏰)" value="⭐" required style="width:30%">
+                    <select id="c-category" required style="width:70%">
+                        <option value="study">📚 Tanulás & Jegyek</option>
+                        <option value="behavior">⚠️ Fegyelem & Késés</option>
+                        <option value="fun">🎉 Közösség & Móka</option>
+                    </select>
+                </div>
+                
+                <div class="flex-row">
+                    <input type="number" id="c-value" placeholder="Kezdőérték" value="0" required>
+                    <input type="number" id="c-step" placeholder="Lépésköz (pl. 1)" value="1" required>
+                </div>
 
-    <!-- Új Esemény Modal -->
-    <div id="event-modal" class="modal-backdrop hidden">
-        <div class="modal">
-            <button onclick="closeModal('event-modal')" class="modal-close">&times;</button>
-            <h3>Új D-Day Esemény</h3>
-            <form onsubmit="saveEvent(event)">
-                <input type="text" id="event-title-input" placeholder="Esemény neve (pl. Érettségi)" required>
-                <input type="date" id="event-date-input" required>
-                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Új Post-it Modal -->
-    <div id="notice-modal" class="modal-backdrop hidden">
-        <div class="modal">
-            <button onclick="closeModal('notice-modal')" class="modal-close">&times;</button>
-            <h3>Új Üzenet / Post-it</h3>
-            <form onsubmit="saveNotice(event)">
-                <input type="text" id="notice-title-input" placeholder="Cím (pl. Wi-Fi Jelszó)" required>
-                <textarea id="notice-text-input" placeholder="Üzenet tartalma..." required></textarea>
-                <select id="notice-color-input">
-                    <option value="yellow">💛 Sárga</option>
-                    <option value="blue">💙 Kék</option>
-                    <option value="green">💚 Zöld</option>
-                    <option value="pink">🩷 Rózsaszín</option>
+                <input type="number" id="c-max" placeholder="Cél (opcionális, pl. 100)" min="1">
+                
+                <select id="c-color">
+                    <option value="primary">Kék (Alap)</option>
+                    <option value="emerald">Zöld (Pozitív)</option>
+                    <option value="rose">Piros (Negatív)</option>
+                    <option value="gold">Sárga (Figyelem)</option>
                 </select>
-                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
+
+                <button type="submit" class="btn btn-emerald w-full mt-3">Mentés</button>
             </form>
         </div>
     </div>
 
-    <!-- Új Feladat Modal -->
-    <div id="task-modal" class="modal-backdrop hidden">
+    <!-- Beállítások / Adatkezelés Modal -->
+    <div id="settings-modal" class="modal-backdrop hidden">
         <div class="modal">
-            <button onclick="closeModal('task-modal')" class="modal-close">&times;</button>
-            <h3>Új Témazáró / Feladat</h3>
-            <form onsubmit="saveTask(event)">
-                <input type="text" id="task-title-input" placeholder="Feladat megnevezése" required>
-                <input type="text" id="task-subject-input" placeholder="Tantárgy (pl. Matematika)" required>
-                <input type="date" id="task-date-input" required>
-                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
-            </form>
+            <button onclick="closeModal('settings-modal')" class="modal-close">&times;</button>
+            <h3><i class="fa-solid fa-gears"></i> Rendszer Beállítások</h3>
+            <div class="flex-col gap-2 mt-3">
+                <button onclick="changePinCode()" class="btn btn-outline w-full"><i class="fa-solid fa-key"></i> PIN Kód Módosítása</button>
+                <hr style="border-color: var(--border-color); margin: 10px 0;">
+                <button onclick="exportData()" class="btn btn-primary w-full"><i class="fa-solid fa-download"></i> Adatok Mentése (JSON)</button>
+                <button onclick="document.getElementById('import-file').click()" class="btn btn-outline w-full"><i class="fa-solid fa-upload"></i> Adatok Betöltése</button>
+                <input type="file" id="import-file" style="display:none" onchange="importData(event)">
+                <button onclick="resetToDefault()" class="btn btn-danger w-full mt-3"><i class="fa-solid fa-rotate-left"></i> Gyári Visszaállítás</button>
+            </div>
         </div>
     </div>
 
-    <!-- Új Órarendi Óra Modal -->
-    <div id="timetable-modal" class="modal-backdrop hidden">
-        <div class="modal">
-            <button onclick="closeModal('timetable-modal')" class="modal-close">&times;</button>
-            <h3>Új Órarendi Elem</h3>
-            <form onsubmit="saveTimetableLesson(event)">
-                <select id="tt-day-input">
-                    <option value="Hétfő">Hétfő</option>
-                    <option value="Kedd">Kedd</option>
-                    <option value="Szerda">Szerda</option>
-                    <option value="Csütörtök">Csütörtök</option>
-                    <option value="Péntek">Péntek</option>
-                </select>
-                <input type="number" id="tt-num-input" placeholder="Hányadik óra? (1-8)" min="1" max="10" required>
-                <input type="text" id="tt-subject-input" placeholder="Tantárgy neve" required>
-                <input type="text" id="tt-room-input" placeholder="Terem (pl. 204)" required>
-                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- JavaScript hivatkozás -->
     <script src="script.js"></script>
 </body>
 </html>

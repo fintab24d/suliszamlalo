@@ -1,102 +1,59 @@
-/* ==========================================
-   SULIHUB ULTRA - JAVASCRIPT LOGIKA
-   ========================================== */
-
-// 1. ALAPÉRTELMEZETT ADATSTRUKTÚRA
+// --- ALAPADATOK ---
 const DEFAULT_DATA = {
     pin: "1234",
     theme: "cyber",
     counters: [
-        { id: "1", title: "Kapott Ötösök", value: 42, icon: "⭐" },
-        { id: "2", title: "Késések Száma", value: 5, icon: "⏰" },
-        { id: "3", title: "Órai Hiányzások", value: 12, icon: "❌" },
-        { id: "4", title: "Kréta hiány", value: 8, icon: "🖍️️" }
-    ],
-    events: [
-        { id: "1", title: "Nyári Szünet", date: "2027-06-15" },
-        { id: "2", title: "Érettségi", date: "2027-05-03" }
-    ],
-    notices: [
-        { id: "1", title: "Osztály Wi-Fi", text: "Jelszó: SuliPass2026", color: "yellow" },
-        { id: "2", title: "Kirándulás", text: "Péntekig hozzátok a pénzt!", color: "blue" }
-    ],
-    tasks: [
-        { id: "1", title: "Matek TZ", subject: "Matematika", date: "2026-10-15" },
-        { id: "2", title: "Töri röpdolgozat", subject: "Történelem", date: "2026-10-08" }
-    ],
-    timetable: {
-        "Hétfő": [
-            { num: 1, subject: "Matematika", room: "204" },
-            { num: 2, subject: "Magyar nyelv", room: "101" },
-            { num: 3, subject: "Történelem", room: "305" }
-        ],
-        "Kedd": [
-            { num: 1, subject: "Angol", room: "202" },
-            { num: 2, subject: "Fizika", room: "Labor" }
-        ],
-        "Szerda": [{ num: 1, subject: "Informatika", room: "Gépterem" }],
-        "Csütörtök": [{ num: 1, subject: "Testnevelés", room: "Tornaterem" }],
-        "Péntek": [{ num: 1, subject: "Biologia", room: "208" }]
-    }
+        { id: "1", title: "Kapott Ötösök", icon: "⭐", category: "study", value: 42, step: 1, max: 100, color: "emerald", date: Date.now() },
+        { id: "2", title: "Késések (Perc)", icon: "⏰", category: "behavior", value: 15, step: 5, max: 0, color: "rose", date: Date.now()-1000 },
+        { id: "3", title: "Kréta / Filc hiány", icon: "🖍", category: "study", value: 4, step: 1, max: 0, color: "gold", date: Date.now()-2000 },
+        { id: "4", title: "Osztálypénz (ezer Ft)", icon: "💰", category: "fun", value: 25, step: 1, max: 50, color: "primary", date: Date.now()-3000 }
+    ]
 };
 
 let appState = {};
 let isAdmin = false;
-let selectedDay = "Hétfő";
 
-// Csengetési Rend Időpontok
-const bellSchedule = [
-    { name: "1. Óra", start: "08:00", end: "08:45" },
-    { name: "Szünet", start: "08:45", end: "08:55" },
-    { name: "2. Óra", start: "08:55", end: "09:40" },
-    { name: "Szünet", start: "09:40", end: "09:50" },
-    { name: "3. Óra", start: "09:50", end: "10:35" },
-    { name: "Szünet", start: "10:35", end: "10:45" },
-    { name: "4. Óra", start: "10:45", end: "11:30" },
-    { name: "Szünet", start: "11:30", end: "11:40" },
-    { name: "5. Óra", start: "11:40", end: "12:25" },
-    { name: "Szünet", start: "12:25", end: "12:35" },
-    { name: "6. Óra", start: "12:35", end: "13:20" }
-];
+// --- INICIALIZÁLÁS ---
+window.onload = () => {
+    loadState();
+};
 
-// 2. TÁROLÁS & BETÖLTÉS (localStorage)
 function loadState() {
-    const saved = localStorage.getItem("sulihub_ultra_data");
+    const saved = localStorage.getItem("sulidash_counters");
     if (saved) {
-        try { appState = JSON.parse(saved); } catch(e) { appState = DEFAULT_DATA; }
+        try { appState = JSON.parse(saved); } 
+        catch(e) { appState = DEFAULT_DATA; }
     } else {
-        appState = DEFAULT_DATA;
+        appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
     }
     changeTheme(appState.theme || "cyber");
-    renderAll();
+    renderCounters();
 }
 
 function saveState() {
-    localStorage.setItem("sulihub_ultra_data", JSON.stringify(appState));
-    renderAll();
+    localStorage.setItem("sulidash_counters", JSON.stringify(appState));
+    renderCounters();
 }
 
-// 3. TÉMA VÁLTÁS
 function changeTheme(themeName) {
     appState.theme = themeName;
     document.documentElement.setAttribute("data-theme", themeName);
     document.getElementById("theme-select").value = themeName;
-    localStorage.setItem("sulihub_ultra_data", JSON.stringify(appState));
+    saveState();
 }
 
-// 4. AUTHENTICATION (ADMIN BELÉPÉS)
+// --- ADMIN AUTHENTIKÁCIÓ ---
 function handleAuthSubmit(e) {
     e.preventDefault();
     const pin = document.getElementById("pin-input").value;
-    const errorDiv = document.getElementById("auth-error");
-
     if (pin === appState.pin) {
         isAdmin = true;
-        errorDiv.classList.add("hidden");
+        document.getElementById("auth-error").classList.add("hidden");
+        document.getElementById("pin-input").value = "";
         closeModal("auth-modal");
         updateAdminUI();
     } else {
-        errorDiv.classList.remove("hidden");
+        document.getElementById("auth-error").classList.remove("hidden");
     }
 }
 
@@ -112,7 +69,6 @@ function updateAdminUI() {
         authText.innerText = "Kilépés";
         authIcon.className = "fa-solid fa-right-from-bracket";
         document.getElementById("auth-btn").onclick = logoutAdmin;
-
         adminButtons.forEach(btn => btn.classList.remove("hidden"));
     } else {
         statusBadge.className = "status-badge guest";
@@ -120,10 +76,9 @@ function updateAdminUI() {
         authText.innerText = "Admin";
         authIcon.className = "fa-solid fa-lock";
         document.getElementById("auth-btn").onclick = () => openModal("auth-modal");
-
         adminButtons.forEach(btn => btn.classList.add("hidden"));
     }
-    renderAll();
+    renderCounters(); // Újrarajzolás, hogy a gombok frissüljenek
 }
 
 function logoutAdmin() {
@@ -132,327 +87,189 @@ function logoutAdmin() {
 }
 
 function changePinCode() {
-    if (!isAdmin) return;
-    const newPin = prompt("Adja meg az új Admin PIN kódot:");
+    const newPin = prompt("Adja meg az új Admin PIN kódot (min. 4 karakter):");
     if (newPin && newPin.trim().length >= 4) {
         appState.pin = newPin.trim();
         saveState();
-        alert("PIN kód sikeresen megváltoztatva!");
-    } else {
-        alert("A PIN kódnak legalább 4 karakteresnek kell lennie!");
+        alert("PIN kód sikeresen módosítva!");
+    } else if (newPin) {
+        alert("Túl rövid PIN kód!");
     }
 }
 
-// 5. RENDERELÉSI FUNKCIÓK
-function renderAll() {
-    renderCounters();
-    renderEvents();
-    renderNotices();
-    renderTasks();
-    renderTimetable();
+// --- RENDERELÉS ÉS SZŰRÉS ---
+function getCategoryName(cat) {
+    const cats = {
+        'study': '📚 Tanulás & Jegyek',
+        'behavior': '⚠️ Fegyelem',
+        'fun': '🎉 Közösség & Móka'
+    };
+    return cats[cat] || 'Egyéb';
 }
 
-// Számlálók
 function renderCounters() {
     const container = document.getElementById("counters-container");
-    container.innerHTML = appState.counters.map(c => `
-        <div class="counter-card">
-            <div style="display:flex; justify-content:space-between;">
-                <span>${c.icon} ${c.title}</span>
-                ${isAdmin ? `<button onclick="deleteCounter('${c.id}')" style="background:none;border:none;color:var(--rose);cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
-            </div>
-            <div class="counter-val">${c.value}</div>
-            <div class="counter-btns">
-                <button class="btn-cnt" onclick="updateCounter('${c.id}', -1)" ${!isAdmin ? 'disabled style="opacity:0.4"' : ''}>-1</button>
-                <button class="btn-cnt add" onclick="updateCounter('${c.id}', 1)" ${!isAdmin ? 'disabled style="opacity:0.4"' : ''}>+1</button>
-            </div>
-        </div>
-    `).join('');
-}
+    const search = document.getElementById("search-input").value.toLowerCase();
+    const filter = document.getElementById("category-filter").value;
+    const sort = document.getElementById("sort-select").value;
 
-function updateCounter(id, delta) {
-    if (!isAdmin) return;
-    const counter = appState.counters.find(c => c.id === id);
-    if (counter) {
-        counter.value = Math.max(0, counter.value + delta);
-        saveState();
+    // Szűrés
+    let filtered = appState.counters.filter(c => {
+        const matchSearch = c.title.toLowerCase().includes(search);
+        const matchCat = filter === 'all' || c.category === filter;
+        return matchSearch && matchCat;
+    });
+
+    // Rendezés
+    filtered.sort((a, b) => {
+        if (sort === 'highest') return b.value - a.value;
+        if (sort === 'lowest') return a.value - b.value;
+        return b.date - a.date; // newest
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color:var(--text-muted);">Nincs a keresésnek megfelelő számláló.</p>`;
+        return;
     }
-}
 
-function saveCounter(e) {
-    e.preventDefault();
-    const title = document.getElementById("counter-title-input").value;
-    const icon = document.getElementById("counter-icon-input").value;
-    const value = parseInt(document.getElementById("counter-val-input").value) || 0;
-
-    appState.counters.push({ id: Date.now().toString(), title, icon, value });
-    saveState();
-    closeModal("counter-modal");
-}
-
-function deleteCounter(id) {
-    if (!isAdmin) return;
-    appState.counters = appState.counters.filter(c => c.id !== id);
-    saveState();
-}
-
-// Események
-function renderEvents() {
-    const container = document.getElementById("events-container");
-    const now = new Date();
-
-    container.innerHTML = appState.events.map(e => {
-        const target = new Date(e.date);
-        const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
-        return `
-            <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong style="font-size:0.85rem">${e.title}</strong>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">${e.date}</div>
+    container.innerHTML = filtered.map(c => {
+        const step = parseInt(c.step) || 1;
+        const max = parseInt(c.max) || 0;
+        let progressHtml = '';
+        
+        if (max > 0) {
+            const pct = Math.min(100, Math.max(0, (c.value / max) * 100));
+            progressHtml = `
+                <div class="progress-bg">
+                    <div class="progress-fill" style="width: ${pct}%"></div>
                 </div>
-                <div style="text-align:right">
-                    <span style="font-size:1.1rem; font-weight:800; color:var(--primary);">${diff > 0 ? diff : 0} nap</span>
-                    ${isAdmin ? `<button onclick="deleteEvent('${e.id}')" style="background:none;border:none;color:var(--rose);margin-left:8px;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
+                <span class="goal-text">Cél: ${max} (${Math.round(pct)}%)</span>
+            `;
+        }
+
+        const adminControls = isAdmin ? `
+            <div class="admin-overlay">
+                <button onclick="editCounter('${c.id}')" title="Szerkesztés"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="resetCounter('${c.id}')" title="Nullázás"><i class="fa-solid fa-rotate-left"></i></button>
+                <button class="btn-del" onclick="deleteCounter('${c.id}')" title="Törlés"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        ` : '';
+
+        return `
+            <div class="counter-card color-${c.color}">
+                ${adminControls}
+                <div class="counter-header">
+                    <div class="c-icon-title">
+                        <span class="c-icon">${c.icon}</span>
+                        <span>${c.title}</span>
+                    </div>
+                </div>
+                <div class="c-category-tag" style="width: fit-content;">${getCategoryName(c.category)}</div>
+                
+                <div class="c-value-container">
+                    <div class="c-value">${c.value}</div>
+                    ${progressHtml}
+                </div>
+
+                <div class="c-controls">
+                    <button class="btn-calc" onclick="updateCounter('${c.id}', -${step})" ${!isAdmin ? 'disabled' : ''}>-${step}</button>
+                    <button class="btn-calc" onclick="updateCounter('${c.id}', ${step})" ${!isAdmin ? 'disabled' : ''}>+${step}</button>
                 </div>
             </div>
         `;
     }).join('');
 }
 
-function saveEvent(e) {
-    e.preventDefault();
-    const title = document.getElementById("event-title-input").value;
-    const date = document.getElementById("event-date-input").value;
-
-    appState.events.push({ id: Date.now().toString(), title, date });
-    saveState();
-    closeModal("event-modal");
-}
-
-function deleteEvent(id) {
+// --- SZÁMLÁLÓ MŰVELETEK ---
+function updateCounter(id, amount) {
     if (!isAdmin) return;
-    appState.events = appState.events.filter(e => e.id !== id);
-    saveState();
-}
-
-// Post-it Üzenetek
-function renderNotices() {
-    const container = document.getElementById("notices-container");
-    container.innerHTML = appState.notices.map(n => `
-        <div class="post-it ${n.color || 'yellow'}">
-            <h4>${n.title}</h4>
-            <p>${n.text}</p>
-            ${isAdmin ? `<button onclick="deleteNotice('${n.id}')" style="position:absolute; top:6px; right:6px; background:none; border:none; color:#dc2626; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>` : ''}
-        </div>
-    `).join('');
-}
-
-function saveNotice(e) {
-    e.preventDefault();
-    const title = document.getElementById("notice-title-input").value;
-    const text = document.getElementById("notice-text-input").value;
-    const color = document.getElementById("notice-color-input").value;
-
-    appState.notices.push({ id: Date.now().toString(), title, text, color });
-    saveState();
-    closeModal("notice-modal");
-}
-
-function deleteNotice(id) {
-    if (!isAdmin) return;
-    appState.notices = appState.notices.filter(n => n.id !== id);
-    saveState();
-}
-
-// Feladatok
-function renderTasks() {
-    const container = document.getElementById("tasks-container");
-    container.innerHTML = appState.tasks.map(t => `
-        <div style="background:rgba(0,0,0,0.2); padding:8px 12px; border-radius:8px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <span style="font-size:0.65rem; background:rgba(244,63,94,0.2); color:var(--rose); padding:2px 6px; border-radius:4px;">${t.subject}</span>
-                <div style="font-size:0.85rem; font-weight:600; margin-top:2px;">${t.title}</div>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">
-                ${t.date}
-                ${isAdmin ? `<button onclick="deleteTask('${t.id}')" style="background:none;border:none;color:var(--rose);margin-left:6px;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
-            </div>
-        </div>
-    `).join('');
-}
-
-function saveTask(e) {
-    e.preventDefault();
-    const title = document.getElementById("task-title-input").value;
-    const subject = document.getElementById("task-subject-input").value;
-    const date = document.getElementById("task-date-input").value;
-
-    appState.tasks.push({ id: Date.now().toString(), title, subject, date });
-    saveState();
-    closeModal("task-modal");
-}
-
-function deleteTask(id) {
-    if (!isAdmin) return;
-    appState.tasks = appState.tasks.filter(t => t.id !== id);
-    saveState();
-}
-
-// Órarend
-function selectDay(day) {
-    selectedDay = day;
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.innerText.includes(day.substring(0, 2)));
-    });
-    renderTimetable();
-}
-
-function renderTimetable() {
-    const container = document.getElementById("timetable-container");
-    const list = appState.timetable[selectedDay] || [];
-
-    if (list.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">Nincs megadva óra erre a napra.</p>`;
-        return;
+    const c = appState.counters.find(x => x.id === id);
+    if (c) {
+        c.value += amount;
+        saveState();
     }
-
-    container.innerHTML = list.map((item, idx) => `
-        <div class="timetable-item">
-            <span><strong>${item.num}. Óra:</strong> ${item.subject}</span>
-            <span style="color:var(--text-muted); font-size:0.75rem;">
-                <i class="fa-solid fa-location-dot"></i> ${item.room} Terem
-                ${isAdmin ? `<button onclick="deleteLesson('${selectedDay}',${idx})" style="background:none;border:none;color:var(--rose);margin-left:6px;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
-            </span>
-        </div>
-    `).join('');
 }
 
-function saveTimetableLesson(e) {
-    e.preventDefault();
-    const day = document.getElementById("tt-day-input").value;
-    const num = parseInt(document.getElementById("tt-num-input").value);
-    const subject = document.getElementById("tt-subject-input").value;
-    const room = document.getElementById("tt-room-input").value;
-
-    if (!appState.timetable[day]) appState.timetable[day] = [];
-    appState.timetable[day].push({ num, subject, room });
-    appState.timetable[day].sort((a, b) => a.num - b.num);
-
-    saveState();
-    closeModal("timetable-modal");
-}
-
-function deleteLesson(day, index) {
+function resetCounter(id) {
     if (!isAdmin) return;
-    appState.timetable[day].splice(index, 1);
-    saveState();
+    const c = appState.counters.find(x => x.id === id);
+    if (c && confirm(`Biztosan nullázod a(z) "${c.title}" számlálót?`)) {
+        c.value = 0;
+        saveState();
+    }
 }
 
-// 6. JEGYÁTLAG SZÁMOLÓ
-function calculateGrades() {
-    const str = document.getElementById("grade-inputs").value;
-    const target = parseFloat(document.getElementById("target-grade").value);
-
-    const grades = str.split(',').map(n => parseFloat(n.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 5);
-
-    if (grades.length === 0) {
-        document.getElementById("res-avg").innerText = "--";
-        document.getElementById("res-needed").innerText = "--";
-        return;
+function deleteCounter(id) {
+    if (!isAdmin) return;
+    if (confirm("Biztosan törlöd ezt a számlálót?")) {
+        appState.counters = appState.counters.filter(x => x.id !== id);
+        saveState();
     }
+}
 
-    const sum = grades.reduce((a, b) => a + b, 0);
-    const avg = sum / grades.length;
-    document.getElementById("res-avg").innerText = avg.toFixed(2);
+function editCounter(id) {
+    const c = appState.counters.find(x => x.id === id);
+    if (!c) return;
+    
+    document.getElementById("modal-counter-title").innerText = "Számláló Szerkesztése";
+    document.getElementById("c-id").value = c.id;
+    document.getElementById("c-title").value = c.title;
+    document.getElementById("c-icon").value = c.icon;
+    document.getElementById("c-category").value = c.category;
+    document.getElementById("c-value").value = c.value;
+    document.getElementById("c-step").value = c.step;
+    document.getElementById("c-max").value = c.max || "";
+    document.getElementById("c-color").value = c.color;
+    
+    openModal('counter-modal');
+}
 
-    if (target && target > avg) {
-        let needed = 0;
-        let tempSum = sum;
-        let tempCount = grades.length;
+function saveCounter(e) {
+    e.preventDefault();
+    const id = document.getElementById("c-id").value;
+    const newCounter = {
+        id: id || Date.now().toString(),
+        title: document.getElementById("c-title").value,
+        icon: document.getElementById("c-icon").value,
+        category: document.getElementById("c-category").value,
+        value: parseInt(document.getElementById("c-value").value) || 0,
+        step: parseInt(document.getElementById("c-step").value) || 1,
+        max: parseInt(document.getElementById("c-max").value) || 0,
+        color: document.getElementById("c-color").value,
+        date: id ? appState.counters.find(x=>x.id===id).date : Date.now()
+    };
 
-        while ((tempSum / tempCount) < target && needed < 50) {
-            tempSum += 5;
-            tempCount++;
-            needed++;
-        }
-        document.getElementById("res-needed").innerText = `${needed} db 5-ös`;
+    if (id) {
+        const idx = appState.counters.findIndex(x => x.id === id);
+        appState.counters[idx] = newCounter;
     } else {
-        document.getElementById("res-needed").innerText = "Elérve!";
+        appState.counters.push(newCounter);
     }
+    
+    saveState();
+    closeModal('counter-modal');
+    document.getElementById("c-id").value = ""; // reset
+    e.target.reset();
 }
 
-// 7. ÉLŐ CSENGETÉSI REND ÓRA
-function updateBellTimer() {
-    const now = new Date();
-    document.getElementById("live-clock").innerText = now.toLocaleString("hu-HU");
-
-    const curMins = now.getHours() * 60 + now.getMinutes();
-    let currentEvent = null;
-
-    for (let s of bellSchedule) {
-        const [sh, sm] = s.start.split(':').map(Number);
-        const [eh, em] = s.end.split(':').map(Number);
-        const sMins = sh * 60 + sm;
-        const eMins = eh * 60 + em;
-
-        if (curMins >= sMins && curMins < eMins) {
-            currentEvent = { ...s, sMins, eMins };
-            break;
-        }
+// --- MODÁLOK & ADATKEZELÉS ---
+function openModal(id) {
+    if (id === 'counter-modal' && !document.getElementById("c-id").value) {
+        document.getElementById("modal-counter-title").innerText = "Új Számláló";
+        document.getElementById("c-value").value = "0";
     }
-
-    if (currentEvent) {
-        document.getElementById("lesson-status-title").innerText = currentEvent.name;
-        const left = currentEvent.eMins - curMins;
-        const total = currentEvent.eMins - currentEvent.sMins;
-        const passed = curMins - currentEvent.sMins;
-        const pct = (passed / total) * 100;
-
-        document.getElementById("lesson-countdown").innerText = `${left} perc van hátra`;
-        document.getElementById("lesson-subtext").innerText = `Vége: ${currentEvent.end}-kor`;
-        document.getElementById("lesson-progress").style.width = `${pct}%`;
-    } else {
-        document.getElementById("lesson-status-title").innerText = "Tanítási időn kívül";
-        document.getElementById("lesson-countdown").innerText = "Nincs óra";
-        document.getElementById("lesson-subtext").innerText = "Pihenj egyet!";
-        document.getElementById("lesson-progress").style.width = "0%";
-    }
+    document.getElementById(id).classList.remove("hidden");
 }
 
-// 8. ISKOLACSENGŐ HANGSZINTETIZÁTOR (Web Audio API)
-function playSchoolBell() {
-    try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 hang
-
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start();
-        osc.stop(ctx.currentTime + 1.5);
-    } catch(e) {
-        alert("A böngésződ nem támogatja az audio szintetizátort.");
-    }
+function closeModal(id) {
+    document.getElementById(id).classList.add("hidden");
+    if (id === 'counter-modal') document.getElementById("c-id").value = "";
 }
-
-// 9. MODÁL KEZELÉS & EXPORT/IMPORT
-function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
-function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
 
 function exportData() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
     const a = document.createElement('a');
-    a.href = dataStr;
-    a.download = "sulihub_mentes.json";
+    a.href = dataStr; a.download = "sulidash_szamlalok.json";
     a.click();
 }
 
@@ -464,24 +281,17 @@ function importData(e) {
         try {
             appState = JSON.parse(event.target.result);
             saveState();
-            alert("Sikeres adatimportálás!");
-        } catch(err) {
-            alert("Érvénytelen JSON fájl!");
-        }
+            alert("Adatok sikeresen betöltve!");
+            closeModal('settings-modal');
+        } catch(err) { alert("Érvénytelen fájl!"); }
     };
     reader.readAsText(file);
 }
 
 function resetToDefault() {
-    if (confirm("Biztosan visszaállítod a gyári adatokat?")) {
-        appState = DEFAULT_DATA;
+    if (confirm("Minden adat törlődik! Biztosan visszaállítod az alapállapotot?")) {
+        appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
         saveState();
+        closeModal('settings-modal');
     }
 }
-
-// Indítás
-window.onload = () => {
-    loadState();
-    setInterval(updateBellTimer, 1000);
-    updateBellTimer();
-};
