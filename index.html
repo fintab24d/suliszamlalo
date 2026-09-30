@@ -1,1071 +1,267 @@
 <!DOCTYPE html>
-<html lang="hu" class="dark">
+<html lang="hu" data-theme="cyber">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuliDash - Osztály Dashboard & Számláló</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#f0f9ff', 500: '#0284c7', 600: '#0369a1', 700: '#075985' }
-                    }
-                }
-            }
-        }
-    </script>
+    <title>SuliHub Ultra - Osztály Központ</title>
+    <!-- CSS hivatkozás -->
+    <link rel="stylesheet" href="style.css">
     <!-- FontAwesome Ikonok -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Inter betűtípus -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* Görgetősáv egyedi stílus */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        .glass-panel {
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col transition-colors duration-300 dark:bg-slate-900 dark:text-slate-100 bg-slate-50 text-slate-800">
+<body>
 
-    <!-- Toast Értesítések Konténer -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-    <header class="bg-slate-800/80 dark:bg-slate-800/80 bg-white/80 glass-panel border-b border-slate-700/50 dark:border-slate-700/50 border-slate-200 sticky top-0 z-40 transition-colors">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
-            <!-- Brand Logo -->
-            <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-br from-sky-400 to-emerald-500 text-white p-2.5 rounded-2xl shadow-lg shadow-sky-500/20">
-                    <i class="fa-solid fa-graduation-cap text-xl"></i>
-                </div>
+    <!-- Felső Fejléc -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon"><i class="fa-solid fa-rocket"></i></div>
                 <div>
-                    <h1 class="text-xl font-extrabold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">SuliDash</h1>
-                    <p class="text-xs text-slate-400 dark:text-slate-400 text-slate-500 font-medium" id="live-clock">2026.09.30 | 10:54:00</p>
+                    <h1>SuliHub <span class="badge-ultra">ULTRA</span></h1>
+                    <p id="live-clock">2026.09.30 | 10:00:00</p>
                 </div>
             </div>
 
-            <!-- Jobb oldali Vezérlők -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
-                <!-- Téma Váltó -->
-                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-700/50 dark:bg-slate-700/50 bg-slate-100 hover:bg-slate-700 dark:hover:bg-slate-700 hover:bg-slate-200 text-slate-300 dark:text-slate-300 text-slate-600 transition" title="Sötét / Világos Mód Váltás">
-                    <i class="fa-solid fa-moon dark:inline hidden text-amber-300"></i>
-                    <i class="fa-solid fa-sun dark:hidden inline text-amber-500"></i>
-                </button>
+            <div class="nav-actions">
+                <!-- Témaváltó -->
+                <select id="theme-select" onchange="changeTheme(this.value)" class="theme-dropdown">
+                    <option value="cyber">⚡ Cyber Neon</option>
+                    <option value="sunset">🌅 Sunset Gold</option>
+                    <option value="mint">🌿 Mint Fresh</option>
+                </select>
 
-                <!-- Admin Mód Badge -->
-                <div id="admin-badge" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
-                    <i class="fa-solid fa-user"></i>
-                    <span id="admin-badge-text">Vendég Nézet</span>
+                <!-- Admin Státusz -->
+                <div id="admin-status" class="status-badge guest">
+                    <i class="fa-solid fa-user"></i> <span>Vendég</span>
                 </div>
 
-                <!-- Admin Mód Be/Kijelentkezés -->
-                <button id="auth-btn" onclick="toggleAdminAuth()" class="bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-sky-600/30 transition flex items-center gap-2">
-                    <i class="fa-solid fa-lock" id="auth-btn-icon"></i>
-                    <span id="auth-btn-text">Admin Belépés</span>
+                <button id="auth-btn" onclick="openModal('auth-modal')" class="btn btn-primary">
+                    <i class="fa-solid fa-lock" id="auth-icon"></i> <span id="auth-text">Admin</span>
                 </button>
-
-                <!-- Adatkezelés Dropdown (Admin Mód) -->
-                <div id="data-mgmt-wrapper" class="relative hidden">
-                    <button onclick="toggleDataMenu()" class="p-2.5 bg-slate-700 dark:bg-slate-700 bg-slate-200 hover:bg-slate-600 text-slate-200 rounded-xl text-xs transition flex items-center gap-1">
-                        <i class="fa-solid fa-database"></i>
-                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                    </button>
-                    <div id="data-menu" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 dark:bg-slate-800 bg-white border border-slate-700 dark:border-slate-700 border-slate-200 rounded-2xl shadow-2xl py-2 z-50 text-xs">
-                        <button onclick="openExportModal()" class="w-full text-left px-4 py-2 hover:bg-slate-700/50 dark:hover:bg-slate-700/50 hover:bg-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-download text-sky-400"></i> Adatok Exportálása
-                        </button>
-                        <button onclick="openImportModal()" class="w-full text-left px-4 py-2 hover:bg-slate-700/50 dark:hover:bg-slate-700/50 hover:bg-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-upload text-emerald-400"></i> Adatok Importálása
-                        </button>
-                        <button onclick="openChangePinModal()" class="w-full text-left px-4 py-2 hover:bg-slate-700/50 dark:hover:bg-slate-700/50 hover:bg-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-key text-amber-400"></i> PIN Kód Módosítása
-                        </button>
-                        <hr class="my-1 border-slate-700/50 dark:border-slate-700/50 border-slate-200">
-                        <button onclick="openResetModal()" class="w-full text-left px-4 py-2 hover:bg-rose-500/10 text-rose-400 flex items-center gap-2">
-                            <i class="fa-solid fa-rotate-left"></i> Gyári Visszaállítás
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+    <!-- Fő Bento Grid Konténer -->
+    <main class="bento-container">
 
-        <!-- Top Widgets Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <div class="bg-slate-800/60 dark:bg-slate-800/60 bg-white border border-slate-700/60 dark:border-slate-700/60 border-slate-200 rounded-3xl p-5 shadow-xl flex flex-col justify-between relative overflow-hidden">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
-                            <i class="fa-regular fa-clock"></i> Csengetési Rend
-                        </span>
-                        <div class="flex items-center gap-1.5">
-                            <span id="lesson-status-badge" class="text-xs bg-slate-700/80 dark:bg-slate-700/80 bg-slate-100 text-slate-300 dark:text-slate-300 text-slate-700 px-2.5 py-1 rounded-full font-semibold">--</span>
-                            <button onclick="openScheduleModal()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded-lg transition" title="Csengetési rend megtekintése / szerkesztése">
-                                <i class="fa-solid fa-list-ul"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="text-3xl font-black text-slate-100 dark:text-slate-100 text-slate-800 my-2" id="lesson-timer">--:--</div>
-                    <p class="text-xs text-slate-400 dark:text-slate-400 text-slate-500" id="lesson-subtext">Számítás folyamatban...</p>
+        <!-- 1. KÁRTYA: Élő Csengetési Rend + Csengő Hangeffekt -->
+        <div class="bento-card card-bell">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-bell text-gold"></i> Csengetési Rend</span>
+                <button onclick="playSchoolBell()" class="btn-bell-sound" title="Iskolacsengő teszt">
+                    <i class="fa-solid fa-volume-high"></i> Csengő
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="bell-status">
+                    <h2 id="lesson-status-title">Betöltés...</h2>
+                    <div id="lesson-countdown" class="big-timer">--:--</div>
+                    <p id="lesson-subtext" class="subtext">Következő esemény kiszámítása...</p>
                 </div>
-                
-                <div class="mt-4 space-y-2">
-                    <div class="w-full bg-slate-700/60 dark:bg-slate-700/60 bg-slate-200 rounded-full h-3 overflow-hidden p-0.5">
-                        <div id="lesson-progress-bar" class="bg-gradient-to-r from-sky-400 to-emerald-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between text-[11px] text-slate-400 font-medium">
-                        <span id="lesson-start-label">00:00</span>
-                        <span id="lesson-end-label">00:00</span>
-                    </div>
+                <div class="progress-bar-container">
+                    <div id="lesson-progress" class="progress-bar" style="width: 0%"></div>
                 </div>
             </div>
-
-            <div class="bg-slate-800/60 dark:bg-slate-800/60 bg-white border border-slate-700/60 dark:border-slate-700/60 border-slate-200 rounded-3xl p-5 shadow-xl flex flex-col justify-between relative">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                        <i class="fa-solid fa-hourglass-half"></i> <span id="event-title-display">Eseményig</span>
-                    </span>
-                    <button id="edit-event-btn" onclick="openEventModal()" class="admin-only hidden text-xs bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition">
-                        <i class="fa-solid fa-pen mr-1"></i>Szerkesztés
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-4 gap-2 text-center my-3" id="event-countdown-grid">
-                    <div class="bg-slate-900/60 dark:bg-slate-900/60 bg-slate-100 p-2.5 rounded-2xl border border-slate-700/50 dark:border-slate-700/50 border-slate-200">
-                        <div class="text-2xl font-black text-sky-400" id="cd-days">00</div>
-                        <div class="text-[10px] text-slate-400 font-medium uppercase">Nap</div>
-                    </div>
-                    <div class="bg-slate-900/60 dark:bg-slate-900/60 bg-slate-100 p-2.5 rounded-2xl border border-slate-700/50 dark:border-slate-700/50 border-slate-200">
-                        <div class="text-2xl font-black text-sky-400" id="cd-hours">00</div>
-                        <div class="text-[10px] text-slate-400 font-medium uppercase">Óra</div>
-                    </div>
-                    <div class="bg-slate-900/60 dark:bg-slate-900/60 bg-slate-100 p-2.5 rounded-2xl border border-slate-700/50 dark:border-slate-700/50 border-slate-200">
-                        <div class="text-2xl font-black text-sky-400" id="cd-mins">00</div>
-                        <div class="text-[10px] text-slate-400 font-medium uppercase">Perc</div>
-                    </div>
-                    <div class="bg-slate-900/60 dark:bg-slate-900/60 bg-slate-100 p-2.5 rounded-2xl border border-slate-700/50 dark:border-slate-700/50 border-slate-200">
-                        <div class="text-2xl font-black text-sky-400" id="cd-secs">00</div>
-                        <div class="text-[10px] text-slate-400 font-medium uppercase">Mp</div>
-                    </div>
-                </div>
-
-                <p class="text-xs text-slate-400 text-center font-medium" id="event-target-date-display">Cél dátum: --</p>
-            </div>
-
-            <div class="bg-slate-800/60 dark:bg-slate-800/60 bg-white border border-slate-700/60 dark:border-slate-700/60 border-slate-200 rounded-3xl p-5 shadow-xl flex flex-col justify-between">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-bullhorn"></i> Hirdetőtábla
-                    </span>
-                    <button onclick="openNoticeModal()" class="admin-only hidden text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-2.5 py-1 rounded-lg border border-amber-500/30 transition">
-                        <i class="fa-solid fa-plus mr-1"></i>Új Hír
-                    </button>
-                </div>
-                <div id="notices-list" class="space-y-2.5 max-h-40 overflow-y-auto pr-1 my-1">
-                    <!-- Dinamikus hírek -->
-                </div>
-            </div>
-
         </div>
 
-        <section class="space-y-4">
-            <div class="flex justify-between items-center flex-wrap gap-2">
-                <div>
-                    <h2 class="text-lg font-extrabold text-slate-100 dark:text-slate-100 text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-calculator text-sky-400"></i> Osztály Számlálók
-                    </h2>
-                    <p class="text-xs text-slate-400">Bármit mérhettek: kapott ötösök, késések, hiányzások...</p>
+        <!-- 2. KÁRTYA: Többszörös Esemény Visszaszámláló HUB -->
+        <div class="bento-card card-events">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-hourglass-half text-cyan"></i> D-Day Visszaszámlálók</span>
+                <button onclick="openModal('event-modal')" class="btn-admin-only btn-sm btn-cyan hidden">+ Új Esemény</button>
+            </div>
+            <div class="card-body scrollable" id="events-container">
+                <!-- JS írja be -->
+            </div>
+        </div>
+
+        <!-- 3. KÁRTYA: Post-it / Osztály Hirdetőtábla -->
+        <div class="bento-card card-noticeboard">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-note-sticky text-amber"></i> Üzenőfal & Info</span>
+                <button onclick="openModal('notice-modal')" class="btn-admin-only btn-sm btn-amber hidden">+ Post-it</button>
+            </div>
+            <div class="card-body notice-grid scrollable" id="notices-container">
+                <!-- JS írja be -->
+            </div>
+        </div>
+
+        <!-- 4. KÁRTYA: Osztály Számlálók (+1 / -1) -->
+        <div class="bento-card card-counters col-span-2">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-calculator text-emerald"></i> Élő Osztály Számlálók</span>
+                <button onclick="openModal('counter-modal')" class="btn-admin-only btn-sm btn-emerald hidden">+ Új Számláló</button>
+            </div>
+            <div class="card-body counters-grid" id="counters-container">
+                <!-- JS írja be -->
+            </div>
+        </div>
+
+        <!-- 5. KÁRTYA: Interaktív Órarend (Hétfő-Péntek) -->
+        <div class="bento-card card-timetable col-span-2">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-calendar-days text-purple"></i> Hetirend & Órarend</span>
+                <div class="timetable-controls">
+                    <div class="day-selector" id="day-tabs">
+                        <button class="tab-btn active" onclick="selectDay('Hétfő')">H</button>
+                        <button class="tab-btn" onclick="selectDay('Kedd')">K</button>
+                        <button class="tab-btn" onclick="selectDay('Szerda')">Sze</button>
+                        <button class="tab-btn" onclick="selectDay('Csütörtök')">Cs</button>
+                        <button class="tab-btn" onclick="selectDay('Péntek')">P</button>
+                    </div>
+                    <button onclick="openModal('timetable-modal')" class="btn-admin-only btn-sm btn-purple hidden">+ Óra</button>
                 </div>
-                <button onclick="openCounterModal()" class="admin-only hidden bg-sky-600 hover:bg-sky-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-lg shadow-sky-600/30 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-plus"></i> Új Számláló
-                </button>
             </div>
-
-            <!-- Számlálók Kártyák Grid -->
-            <div id="counters-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Javascript írja be -->
+            <div class="card-body scrollable" id="timetable-container">
+                <!-- JS írja be -->
             </div>
-        </section>
+        </div>
 
-        <section class="bg-slate-800/60 dark:bg-slate-800/60 bg-white border border-slate-700/60 dark:border-slate-700/60 border-slate-200 rounded-3xl p-5 shadow-xl space-y-4">
-            <div class="flex justify-between items-center flex-wrap gap-2">
-                <div>
-                    <h2 class="text-lg font-extrabold text-slate-100 dark:text-slate-100 text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-pen-ruler text-emerald-400"></i> Közelgő Témazárók & Feladatok
-                    </h2>
-                    <p class="text-xs text-slate-400">Ne felejts el felkészülni a dolgozatokra!</p>
+        <!-- 6. KÁRTYA: Témazárók & Feladat Tracker -->
+        <div class="bento-card card-tasks">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-pen-to-square text-rose"></i> Témazárók & Feladatok</span>
+                <button onclick="openModal('task-modal')" class="btn-admin-only btn-sm btn-rose hidden">+ Új Feladat</button>
+            </div>
+            <div class="card-body scrollable" id="tasks-container">
+                <!-- JS írja be -->
+            </div>
+        </div>
+
+        <!-- 7. KÁRTYA: Jegyátlag & Céljegy Számológép -->
+        <div class="bento-card card-calculator">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-chart-line text-sky"></i> Jegyátlag Számoló</span>
+            </div>
+            <div class="card-body">
+                <div class="calc-inputs">
+                    <input type="text" id="grade-inputs" placeholder="Jegyeid (pl: 5, 4, 5, 3)" oninput="calculateGrades()">
+                    <input type="number" id="target-grade" placeholder="Célátlag (pl: 4.5)" step="0.1" oninput="calculateGrades()">
                 </div>
-                <button onclick="openTaskModal()" class="admin-only hidden bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-plus"></i> Új Feladat
-                </button>
+                <div class="calc-results">
+                    <div class="res-box"><span>Jelenlegi Átlag:</span> <strong id="res-avg">--</strong></div>
+                    <div class="res-box"><span>Szükséges 5-ösök:</span> <strong id="res-needed" class="text-emerald">--</strong></div>
+                </div>
             </div>
+        </div>
 
-            <div id="tasks-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                <!-- Javascript írja be -->
+        <!-- 8. KÁRTYA: Admin Panel & Adatkezelés -->
+        <div class="bento-card card-settings btn-admin-only hidden">
+            <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-gears text-gold"></i> Admin Vezérlőpult</span>
             </div>
-        </section>
+            <div class="card-body flex-row gap-2">
+                <button onclick="changePinCode()" class="btn btn-outline"><i class="fa-solid fa-key"></i> PIN Módosítása</button>
+                <button onclick="exportData()" class="btn btn-outline"><i class="fa-solid fa-download"></i> Mentés JSON</button>
+                <button onclick="document.getElementById('import-file').click()" class="btn btn-outline"><i class="fa-solid fa-upload"></i> Betöltés JSON</button>
+                <input type="file" id="import-file" style="display:none" onchange="importData(event)">
+                <button onclick="resetToDefault()" class="btn btn-danger"><i class="fa-solid fa-rotate-left"></i> Gyári Visszaállítás</button>
+            </div>
+        </div>
 
     </main>
 
-    <!-- Admin Bejelentkező Modal -->
-    <div id="auth-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 dark:bg-slate-800 bg-white border border-slate-700 dark:border-slate-700 border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('auth-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-            <div class="text-center mb-5">
-                <div class="w-12 h-12 bg-sky-500/20 text-sky-400 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <h3 class="text-lg font-bold text-slate-100 dark:text-slate-100 text-slate-800">Admin Mód Feloldása</h3>
-                <p class="text-xs text-slate-400 mt-1">Add meg az Admin PIN kódot a szerkesztési jogokhoz.</p>
-            </div>
-            
-            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">PIN Kód (Alapértelmezett: 1234)</label>
-                    <input type="password" id="login-pin-input" required maxlength="10" placeholder="••••" class="w-full bg-slate-900 dark:bg-slate-900 bg-slate-100 border border-slate-700 dark:border-slate-700 border-slate-300 rounded-xl px-4 py-2.5 text-center text-xl tracking-widest font-mono text-slate-100 dark:text-slate-100 text-slate-800 focus:outline-none focus:border-sky-500">
-                </div>
-                <div id="login-error-msg" class="text-xs text-rose-400 font-medium text-center hidden"></div>
-                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-sky-600/30">
-                    Belépés
-                </button>
+    <!-- MODÁLOK (Párbeszédablakok) -->
+
+    <!-- Auth / PIN Modal -->
+    <div id="auth-modal" class="modal-backdrop hidden">
+        <div class="modal">
+            <button onclick="closeModal('auth-modal')" class="modal-close">&times;</button>
+            <h3><i class="fa-solid fa-shield-halved text-cyan"></i> Admin Bejelentkezés</h3>
+            <p class="subtext">Add meg az Admin PIN kódot a szerkesztéshez! (Alapértelmezett: <strong>1234</strong>)</p>
+            <form onsubmit="handleAuthSubmit(event)">
+                <input type="password" id="pin-input" placeholder="PIN Kód" maxlength="8" required autofocus>
+                <div id="auth-error" class="error-msg hidden">Hibás PIN kód!</div>
+                <button type="submit" class="btn btn-primary w-full mt-3">Belépés</button>
             </form>
         </div>
     </div>
 
-    <!-- PIN Módosító Modal -->
-    <div id="change-pin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 dark:bg-slate-800 bg-white border border-slate-700 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('change-pin-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 mb-3">Új Admin PIN Kód</h3>
-            <form onsubmit="handleChangePin(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Új PIN Kód</label>
-                    <input type="password" id="new-pin-input" required placeholder="Pl. 5678" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm">Mentés</button>
+    <!-- Új Számláló Modal -->
+    <div id="counter-modal" class="modal-backdrop hidden">
+        <div class="modal">
+            <button onclick="closeModal('counter-modal')" class="modal-close">&times;</button>
+            <h3>Új Számláló</h3>
+            <form onsubmit="saveCounter(event)">
+                <input type="text" id="counter-title-input" placeholder="Cím (pl. Késések)" required>
+                <input type="text" id="counter-icon-input" placeholder="Emoji Ikon (pl. ⏰)" value="⭐" required>
+                <input type="number" id="counter-val-input" placeholder="Kezdőérték" value="0" required>
+                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
             </form>
         </div>
     </div>
 
-    <!-- Számláló Hozzáadó / Szerkesztő Modal -->
-    <div id="counter-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 dark:bg-slate-800 bg-white border border-slate-700 dark:border-slate-700 border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('counter-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 dark:text-slate-100 text-slate-800 mb-4" id="counter-modal-title">Számláló Kezelése</h3>
-            <form onsubmit="handleSaveCounter(event)" class="space-y-3">
-                <input type="hidden" id="counter-edit-id">
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Számláló Neve</label>
-                    <input type="text" id="counter-title-input" required placeholder="Pl. Elmaradt Órák" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Ikon (Emoji)</label>
-                        <input type="text" id="counter-icon-input" required placeholder="⭐" value="⭐" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Jelenlegi Érték</label>
-                        <input type="number" id="counter-value-input" required value="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl text-sm shadow-lg shadow-sky-600/30">Mentés</button>
+    <!-- Új Esemény Modal -->
+    <div id="event-modal" class="modal-backdrop hidden">
+        <div class="modal">
+            <button onclick="closeModal('event-modal')" class="modal-close">&times;</button>
+            <h3>Új D-Day Esemény</h3>
+            <form onsubmit="saveEvent(event)">
+                <input type="text" id="event-title-input" placeholder="Esemény neve (pl. Érettségi)" required>
+                <input type="date" id="event-date-input" required>
+                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
             </form>
         </div>
     </div>
 
-    <!-- Hirdetmény Modal -->
-    <div id="notice-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 dark:bg-slate-800 bg-white border border-slate-700 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('notice-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 mb-4" id="notice-modal-title">Új Hír Posztolása</h3>
-            <form onsubmit="handleSaveNotice(event)" class="space-y-3">
-                <input type="hidden" id="notice-edit-id">
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Cím</label>
-                    <input type="text" id="notice-title-input" required placeholder="Pl. Pénteki osztályfőnöki" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Tartalom</label>
-                    <textarea id="notice-text-input" required rows="3" placeholder="Részletek leírása..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Szerző</label>
-                    <input type="text" id="notice-author-input" required value="Admin" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm">Közzététel</button>
+    <!-- Új Post-it Modal -->
+    <div id="notice-modal" class="modal-backdrop hidden">
+        <div class="modal">
+            <button onclick="closeModal('notice-modal')" class="modal-close">&times;</button>
+            <h3>Új Üzenet / Post-it</h3>
+            <form onsubmit="saveNotice(event)">
+                <input type="text" id="notice-title-input" placeholder="Cím (pl. Wi-Fi Jelszó)" required>
+                <textarea id="notice-text-input" placeholder="Üzenet tartalma..." required></textarea>
+                <select id="notice-color-input">
+                    <option value="yellow">💛 Sárga</option>
+                    <option value="blue">💙 Kék</option>
+                    <option value="green">💚 Zöld</option>
+                    <option value="pink">🩷 Rózsaszín</option>
+                </select>
+                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
             </form>
         </div>
     </div>
 
-    <!-- Feladat Modal -->
-    <div id="task-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('task-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 mb-4" id="task-modal-title">Új Feladat / Dolgozat</h3>
-            <form onsubmit="handleSaveTask(event)" class="space-y-3">
-                <input type="hidden" id="task-edit-id">
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Tantárgy</label>
-                    <input type="text" id="task-subject-input" required placeholder="Pl. Matematika" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Megnevezés</label>
-                    <input type="text" id="task-title-input" required placeholder="Pl. Témazáró egyenletekből" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Határidő Dátuma</label>
-                    <input type="date" id="task-date-input" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-sm">Mentés</button>
+    <!-- Új Feladat Modal -->
+    <div id="task-modal" class="modal-backdrop hidden">
+        <div class="modal">
+            <button onclick="closeModal('task-modal')" class="modal-close">&times;</button>
+            <h3>Új Témazáró / Feladat</h3>
+            <form onsubmit="saveTask(event)">
+                <input type="text" id="task-title-input" placeholder="Feladat megnevezése" required>
+                <input type="text" id="task-subject-input" placeholder="Tantárgy (pl. Matematika)" required>
+                <input type="date" id="task-date-input" required>
+                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
             </form>
         </div>
     </div>
 
-    <!-- Esemény Visszaszámláló Szerkesztő Modal -->
-    <div id="event-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('event-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 mb-4">Visszaszámláló Cél Beállítása</h3>
-            <form onsubmit="handleSaveEvent(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Esemény Neve</label>
-                    <input type="text" id="event-title-input" required placeholder="Pl. Nyári Szünetig" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-300 mb-1">Cél Dátum & Idő</label>
-                    <input type="datetime-local" id="event-date-input" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-sm">Frissítés</button>
+    <!-- Új Órarendi Óra Modal -->
+    <div id="timetable-modal" class="modal-backdrop hidden">
+        <div class="modal">
+            <button onclick="closeModal('timetable-modal')" class="modal-close">&times;</button>
+            <h3>Új Órarendi Elem</h3>
+            <form onsubmit="saveTimetableLesson(event)">
+                <select id="tt-day-input">
+                    <option value="Hétfő">Hétfő</option>
+                    <option value="Kedd">Kedd</option>
+                    <option value="Szerda">Szerda</option>
+                    <option value="Csütörtök">Csütörtök</option>
+                    <option value="Péntek">Péntek</option>
+                </select>
+                <input type="number" id="tt-num-input" placeholder="Hányadik óra? (1-8)" min="1" max="10" required>
+                <input type="text" id="tt-subject-input" placeholder="Tantárgy neve" required>
+                <input type="text" id="tt-room-input" placeholder="Terem (pl. 204)" required>
+                <button type="submit" class="btn btn-primary w-full mt-3">Mentés</button>
             </form>
         </div>
     </div>
 
-    <!-- Csengetési Rend Szerkesztő Modal -->
-    <div id="schedule-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative flex flex-col max-h-[90vh]">
-            <button onclick="closeModal('schedule-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 mb-2">Csengetési Rend Kezelése</h3>
-            <p class="text-xs text-slate-400 mb-4">Módosítsd az órák és szünetek időpontjait.</p>
-
-            <div id="schedule-editor-list" class="flex-1 overflow-y-auto space-y-2 pr-1 my-2">
-                <!-- Javascript tölts be az órákat -->
-            </div>
-
-            <div class="pt-3 border-t border-slate-700 flex justify-between gap-2">
-                <button onclick="addScheduleRow()" class="admin-only hidden bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-xl font-semibold">
-                    + Új Óra/Szünet
-                </button>
-                <button onclick="saveScheduleChanges()" class="admin-only hidden bg-sky-600 hover:bg-sky-500 text-white text-xs px-4 py-2 rounded-xl font-bold ml-auto">
-                    Csengetési Rend Mentése
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Export Modal -->
-    <div id="export-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('export-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 mb-2">Adatok Exportálása</h3>
-            <p class="text-xs text-slate-400 mb-3">Másold ki az alábbi JSON kódot vagy töltsd le fájlként az adatok átadásához.</p>
-            <textarea id="export-json-textarea" readonly rows="8" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-sky-300 focus:outline-none mb-3"></textarea>
-            <div class="flex gap-2">
-                <button onclick="copyExportJson()" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white py-2 rounded-xl text-xs font-bold">Kód Másolása</button>
-                <button onclick="downloadExportJson()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl text-xs font-bold">JSON Fájl Letöltése</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Import Modal -->
-    <div id="import-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('import-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-100 mb-2">Adatok Importálása</h3>
-            <p class="text-xs text-slate-400 mb-3">Illeszd be a kapott JSON kódot az adatok felülírásához.</p>
-            <textarea id="import-json-textarea" rows="8" placeholder='{"pin": "1234", ...}' class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-100 focus:outline-none mb-3"></textarea>
-            <button onclick="handleImportJson()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold">Adatok Beolvasása</button>
-        </div>
-    </div>
-
-    <!-- Gyári Visszaállítás Modal -->
-    <div id="reset-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-center">
-            <div class="w-12 h-12 bg-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-100 mb-2">Gyári Adatok Visszaállítása?</h3>
-            <p class="text-xs text-slate-400 mb-4">Minden egyedi számláló, hír és beállítás törlődni fog és visszaáll az alapértelmezett állapot!</p>
-            <div class="flex gap-2">
-                <button onclick="closeModal('reset-modal')" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-xs font-bold">Mégse</button>
-                <button onclick="executeReset()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded-xl text-xs font-bold">Igen, Törlés</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // =========================================================
-        // 1. ALAPÉRTELMEZETT ADATSTRUKTÚRA & STATE
-        // =========================================================
-        const DEFAULT_STATE = {
-            pin: "1234",
-            theme: "dark",
-            eventCountdown: {
-                title: "Nyári Szünetig",
-                date: "2027-06-15T00:00"
-            },
-            schedule: [
-                { id: "1", name: "1. Óra", start: "08:00", end: "08:45" },
-                { id: "2", name: "1. Szünet", start: "08:45", end: "08:55" },
-                { id: "3", name: "2. Óra", start: "08:55", end: "09:40" },
-                { id: "4", name: "2. Szünet", start: "09:40", end: "09:50" },
-                { id: "5", name: "3. Óra", start: "09:50", end: "10:35" },
-                { id: "6", name: "3. Szünet", start: "10:35", end: "10:45" },
-                { id: "7", name: "4. Óra", start: "10:45", end: "11:30" },
-                { id: "8", name: "4. Szünet", start: "11:30", end: "11:40" },
-                { id: "9", name: "5. Óra", start: "11:40", end: "12:25" },
-                { id: "10", name: "5. Szünet", start: "12:25", end: "12:35" },
-                { id: "11", name: "6. Óra", start: "12:35", end: "13:20" }
-            ],
-            counters: [
-                { id: "c1", title: "Kapott Ötösök", value: 42, icon: "⭐" },
-                { id: "c2", title: "Órai Hiányzások", value: 8, icon: "❌" },
-                { id: "c3", title: "Késések száma", value: 3, icon: "⏰" },
-                { id: "c4", title: "Elveszett Kréták", value: 12, icon: "🖍️" }
-            ],
-            notices: [
-                { id: "n1", title: "Üdvözöl a SuliDash!", text: "Itt nyomon követhetitek az osztály közös számlálóit, a csengetési rendet és a témazárókat.", date: "2026.09.30", author: "Admin" },
-                { id: "n2", title: "Osztálypénz befizetés", text: "Kérlek hozzátok el az osztálykirándulás előlegét jövő péntekig!", date: "2026.10.02", author: "Osztályfőnök" }
-            ],
-            tasks: [
-                { id: "t1", title: "Matek Témazáró - Egyenletek", subject: "Matematika", date: "2026-10-15", done: false },
-                { id: "t2", title: "Történelem Röpdolgozat", subject: "Történelem", date: "2026-10-08", done: false },
-                { id: "t3", title: "Irodalom Olvasónapló feladása", subject: "Irodalom", date: "2026-10-22", done: true }
-            ]
-        };
-
-        let appState = {};
-        let isAdmin = false;
-
-        // LocalStorage Betöltés & Mentés
-        function loadState() {
-            try {
-                const stored = localStorage.getItem('sulidash_state_v2');
-                if (stored) {
-                    appState = JSON.parse(stored);
-                } else {
-                    appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
-                }
-            } catch (e) {
-                console.error("Hiba a mentett adatok beolvasásakor, alapértelmezett töltése:", e);
-                appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
-            }
-        }
-
-        function saveState() {
-            try {
-                localStorage.setItem('sulidash_state_v2', JSON.stringify(appState));
-            } catch (e) {
-                console.error("Hiba a mentés során:", e);
-            }
-        }
-
-        // =========================================================
-        // 2. ADMIN AUTHENTICATION & UI CONTROL
-        // =========================================================
-        function toggleAdminAuth() {
-            if (isAdmin) {
-                isAdmin = false;
-                updateAdminUI();
-                showToast("Kijelentkezve Vendég nézetbe.", "info");
-            } else {
-                document.getElementById('login-pin-input').value = '';
-                document.getElementById('login-error-msg').classList.add('hidden');
-                openModal('auth-modal');
-            }
-        }
-
-        function handleAdminLogin(e) {
-            e.preventDefault();
-            const inputPin = document.getElementById('login-pin-input').value;
-            const errDiv = document.getElementById('login-error-msg');
-
-            if (inputPin === appState.pin) {
-                isAdmin = true;
-                closeModal('auth-modal');
-                updateAdminUI();
-                showToast("Admin Mód sikeresen feloldva!", "success");
-            } else {
-                errDiv.innerText = "Hibás PIN kód! Próbáld újra.";
-                errDiv.classList.remove('hidden');
-            }
-        }
-
-        function updateAdminUI() {
-            const badgeText = document.getElementById('admin-badge-text');
-            const badge = document.getElementById('admin-badge');
-            const authBtnText = document.getElementById('auth-btn-text');
-            const authBtnIcon = document.getElementById('auth-btn-icon');
-            const dataWrapper = document.getElementById('data-mgmt-wrapper');
-
-            if (isAdmin) {
-                badgeText.innerText = "Admin Mód Aktív";
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5";
-                authBtnText.innerText = "Kijelentkezés";
-                authBtnIcon.className = "fa-solid fa-right-from-bracket";
-                dataWrapper.classList.remove('hidden');
-
-                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-            } else {
-                badgeText.innerText = "Vendég Nézet";
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5";
-                authBtnText.innerText = "Admin Belépés";
-                authBtnIcon.className = "fa-solid fa-lock";
-                dataWrapper.classList.add('hidden');
-
-                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-            }
-            renderCounters();
-            renderNotices();
-            renderTasks();
-        }
-
-        function openChangePinModal() {
-            closeDataMenu();
-            openModal('change-pin-modal');
-        }
-
-        function handleChangePin(e) {
-            e.preventDefault();
-            const newPin = document.getElementById('new-pin-input').value.trim();
-            if (newPin) {
-                appState.pin = newPin;
-                saveState();
-                closeModal('change-pin-modal');
-                showToast("Új PIN kód elmentve!", "success");
-            }
-        }
-
-        // =========================================================
-        // 3. UI RENDERELŐ FUNKCIÓK
-        // =========================================================
-        function renderCounters() {
-            const grid = document.getElementById('counters-grid');
-            grid.innerHTML = appState.counters.map(c => `
-                <div class="bg-slate-800/80 dark:bg-slate-800/80 bg-white border border-slate-700/80 dark:border-slate-700/80 border-slate-200 rounded-3xl p-4 shadow-xl flex flex-col justify-between hover:border-slate-600 transition group relative">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-3xl p-2 bg-slate-900/60 dark:bg-slate-900/60 bg-slate-100 rounded-2xl border border-slate-700/50 dark:border-slate-700/50 border-slate-200">${c.icon}</span>
-                        ${isAdmin ? `
-                            <div class="flex items-center gap-1">
-                                <button onclick="openCounterModal('${c.id}')" class="text-slate-400 hover:text-sky-400 text-xs p-1.5 rounded-lg hover:bg-slate-700/50 transition"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteCounter('${c.id}')" class="text-slate-400 hover:text-rose-400 text-xs p-1.5 rounded-lg hover:bg-slate-700/50 transition"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div>
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">${escapeHtml(c.title)}</h3>
-                        <div class="text-4xl font-black text-slate-100 dark:text-slate-100 text-slate-800 my-1">${c.value}</div>
-                    </div>
-                    <div class="flex items-center gap-2 mt-3">
-                        <button onclick="changeCounterVal('${c.id}', -1)" ${!isAdmin ? 'disabled' : ''} class="flex-1 bg-slate-700/80 dark:bg-slate-700/80 bg-slate-200 hover:bg-slate-700 disabled:opacity-30 text-slate-200 dark:text-slate-200 text-slate-800 py-2 rounded-xl font-bold text-sm transition">-1</button>
-                        <button onclick="changeCounterVal('${c.id}', 1)" ${!isAdmin ? 'disabled' : ''} class="flex-1 bg-sky-600 hover:bg-sky-500 disabled:opacity-30 text-white py-2 rounded-xl font-bold text-sm transition shadow-md shadow-sky-600/20">+1</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderNotices() {
-            const list = document.getElementById('notices-list');
-            if (!appState.notices || appState.notices.length === 0) {
-                list.innerHTML = `<p class="text-xs text-slate-500 italic">Nincs megjeleníthető hirdetmény.</p>`;
-                return;
-            }
-            list.innerHTML = appState.notices.map(n => `
-                <div class="bg-slate-900/60 dark:bg-slate-900/60 bg-slate-100 p-3 rounded-2xl border border-slate-700/40 dark:border-slate-700/40 border-slate-200 relative group">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-bold text-amber-400 dark:text-amber-400 text-amber-600">${escapeHtml(n.title)}</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-slate-400">${n.date}</span>
-                            ${isAdmin ? `
-                                <button onclick="deleteNotice('${n.id}')" class="text-slate-500 hover:text-rose-400 text-[10px]"><i class="fa-solid fa-trash"></i></button>
-                            ` : ''}
-                        </div>
-                    </div>
-                    <p class="text-xs text-slate-300 dark:text-slate-300 text-slate-700 leading-relaxed">${escapeHtml(n.text)}</p>
-                    <div class="mt-1 text-[10px] text-slate-500 italic">— ${escapeHtml(n.author)}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderTasks() {
-            const list = document.getElementById('tasks-list');
-            if (!appState.tasks || appState.tasks.length === 0) {
-                list.innerHTML = `<p class="text-xs text-slate-500 italic col-span-full">Nincs kiírt témazáró vagy feladat.</p>`;
-                return;
-            }
-            list.innerHTML = appState.tasks.map(t => `
-                <div class="bg-slate-900/60 dark:bg-slate-900/60 bg-slate-100 p-3.5 rounded-2xl border ${t.done ? 'border-slate-800 opacity-60' : 'border-slate-700/50'} flex items-center justify-between gap-2">
-                    <div class="space-y-1">
-                        <span class="text-[10px] font-bold bg-sky-500/20 text-sky-400 dark:text-sky-300 px-2 py-0.5 rounded-md border border-sky-500/30">${escapeHtml(t.subject)}</span>
-                        <h4 class="text-xs font-bold ${t.done ? 'line-through text-slate-500' : 'text-slate-200 dark:text-slate-200 text-slate-800'}">${escapeHtml(t.title)}</h4>
-                        <p class="text-[10px] text-slate-400"><i class="fa-regular fa-calendar mr-1"></i>Határidő: ${t.date}</p>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="toggleTaskDone('${t.id}')" ${!isAdmin ? 'disabled' : ''} class="p-2 rounded-xl border ${t.done ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'} hover:scale-105 transition">
-                            <i class="fa-solid ${t.done ? 'fa-circle-check' : 'fa-circle'}"></i>
-                        </button>
-                        ${isAdmin ? `
-                            <button onclick="deleteTask('${t.id}')" class="p-2 text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash text-xs"></i></button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // =========================================================
-        // 4. CSENGETÉSI REND & VISSZASZÁMLÁLÓ LOGIKA
-        // =========================================================
-        function updateTimers() {
-            const now = new Date();
-            
-            // Felső Óra
-            document.getElementById('live-clock').innerText = now.toLocaleString('hu-HU', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-
-            // Csengetési Rend Számítás
-            const currentMins = now.getHours() * 60 + now.getMinutes();
-            const currentSecs = now.getSeconds();
-
-            let activeSlot = null;
-            let nextSlot = null;
-
-            for (let i = 0; i < appState.schedule.length; i++) {
-                const s = appState.schedule[i];
-                const [sh, sm] = s.start.split(':').map(Number);
-                const [eh, em] = s.end.split(':').map(Number);
-                const sMins = sh * 60 + sm;
-                const eMins = eh * 60 + em;
-
-                if (currentMins >= sMins && currentMins < eMins) {
-                    activeSlot = { ...s, sMins, eMins };
-                    nextSlot = appState.schedule[i + 1] || null;
-                    break;
-                }
-            }
-
-            const statusBadge = document.getElementById('lesson-status-badge');
-            const timerDisplay = document.getElementById('lesson-timer');
-            const subtextDisplay = document.getElementById('lesson-subtext');
-            const progressBar = document.getElementById('lesson-progress-bar');
-            const startLabel = document.getElementById('lesson-start-label');
-            const endLabel = document.getElementById('lesson-end-label');
-
-            if (activeSlot) {
-                statusBadge.innerText = activeSlot.name;
-                statusBadge.className = "text-xs bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2.5 py-1 rounded-full font-bold";
-
-                const totalSecs = (activeSlot.eMins - activeSlot.sMins) * 60;
-                const passedSecs = (currentMins - activeSlot.sMins) * 60 + currentSecs;
-                const leftSecs = totalSecs - passedSecs;
-
-                const leftMins = Math.floor(leftSecs / 60);
-                const leftSecsRem = leftSecs % 60;
-
-                timerDisplay.innerText = `${leftMins} perc ${leftSecsRem} mp van hátra`;
-                subtextDisplay.innerText = nextSlot ? `Következő: ${nextSlot.name} (${nextSlot.start})` : 'Utolsó óra a mai napon!';
-                
-                const pct = Math.min(100, Math.max(0, (passedSecs / totalSecs) * 100));
-                progressBar.style.width = `${pct}%`;
-
-                startLabel.innerText = activeSlot.start;
-                endLabel.innerText = activeSlot.end;
-            } else {
-                statusBadge.innerText = "Tanítási időn kívül";
-                statusBadge.className = "text-xs bg-slate-700 text-slate-400 px-2.5 py-1 rounded-full font-semibold";
-                timerDisplay.innerText = "Nincs aktív óra";
-                subtextDisplay.innerText = "Jó pihenést kívánunk!";
-                progressBar.style.width = "0%";
-                startLabel.innerText = "--:--";
-                endLabel.innerText = "--:--";
-            }
-
-            // Esemény Visszaszámláló Számítás
-            document.getElementById('event-title-display').innerText = appState.eventCountdown.title;
-            const targetDate = new Date(appState.eventCountdown.date);
-            document.getElementById('event-target-date-display').innerText = "Cél dátum: " + (isNaN(targetDate) ? '--' : targetDate.toLocaleString('hu-HU'));
-
-            const diff = targetDate - now;
-            if (diff > 0 && !isNaN(diff)) {
-                document.getElementById('cd-days').innerText = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(2, '0');
-                document.getElementById('cd-hours').innerText = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
-                document.getElementById('cd-mins').innerText = String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0');
-                document.getElementById('cd-secs').innerText = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
-            } else {
-                document.getElementById('cd-days').innerText = "00";
-                document.getElementById('cd-hours').innerText = "00";
-                document.getElementById('cd-mins').innerText = "00";
-                document.getElementById('cd-secs').innerText = "00";
-            }
-        }
-
-        // =========================================================
-        // 5. CRUD FUNKCIÓK (SZÁMLÁLÓK, HÍREK, FELADATOK)
-        // =========================================================
-        // Számlálók Kezelése
-        function changeCounterVal(id, delta) {
-            if (!isAdmin) return;
-            const item = appState.counters.find(c => c.id === id);
-            if (item) {
-                item.value = Math.max(0, item.value + delta);
-                saveState();
-                renderCounters();
-            }
-        }
-
-        function openCounterModal(id = null) {
-            if (!isAdmin) return;
-            document.getElementById('counter-edit-id').value = id || '';
-            if (id) {
-                const item = appState.counters.find(c => c.id === id);
-                document.getElementById('counter-modal-title').innerText = "Számláló Szerkesztése";
-                document.getElementById('counter-title-input').value = item.title;
-                document.getElementById('counter-icon-input').value = item.icon;
-                document.getElementById('counter-value-input').value = item.value;
-            } else {
-                document.getElementById('counter-modal-title').innerText = "Új Számláló";
-                document.getElementById('counter-title-input').value = '';
-                document.getElementById('counter-icon-input').value = '⭐';
-                document.getElementById('counter-value-input').value = 0;
-            }
-            openModal('counter-modal');
-        }
-
-        function handleSaveCounter(e) {
-            e.preventDefault();
-            const id = document.getElementById('counter-edit-id').value;
-            const title = document.getElementById('counter-title-input').value.trim();
-            const icon = document.getElementById('counter-icon-input').value.trim() || '⭐';
-            const value = parseInt(document.getElementById('counter-value-input').value) || 0;
-
-            if (id) {
-                const item = appState.counters.find(c => c.id === id);
-                if (item) { item.title = title; item.icon = icon; item.value = value; }
-            } else {
-                appState.counters.push({ id: 'c_' + Date.now(), title, icon, value });
-            }
-            saveState();
-            renderCounters();
-            closeModal('counter-modal');
-            showToast("Számláló elmentve!", "success");
-        }
-
-        function deleteCounter(id) {
-            if (!isAdmin) return;
-            appState.counters = appState.counters.filter(c => c.id !== id);
-            saveState();
-            renderCounters();
-            showToast("Számláló törölve.", "info");
-        }
-
-        // Hírek Kezelése
-        function openNoticeModal() {
-            if (!isAdmin) return;
-            document.getElementById('notice-title-input').value = '';
-            document.getElementById('notice-text-input').value = '';
-            openModal('notice-modal');
-        }
-
-        function handleSaveNotice(e) {
-            e.preventDefault();
-            const title = document.getElementById('notice-title-input').value.trim();
-            const text = document.getElementById('notice-text-input').value.trim();
-            const author = document.getElementById('notice-author-input').value.trim() || 'Admin';
-
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-
-            appState.notices.unshift({ id: 'n_' + Date.now(), title, text, author, date: dateStr });
-            saveState();
-            renderNotices();
-            closeModal('notice-modal');
-            showToast("Hír közzétéve!", "success");
-        }
-
-        function deleteNotice(id) {
-            if (!isAdmin) return;
-            appState.notices = appState.notices.filter(n => n.id !== id);
-            saveState();
-            renderNotices();
-            showToast("Hír törölve.", "info");
-        }
-
-        // Feladatok Kezelése
-        function openTaskModal() {
-            if (!isAdmin) return;
-            document.getElementById('task-subject-input').value = '';
-            document.getElementById('task-title-input').value = '';
-            document.getElementById('task-date-input').value = '';
-            openModal('task-modal');
-        }
-
-        function handleSaveTask(e) {
-            e.preventDefault();
-            const subject = document.getElementById('task-subject-input').value.trim();
-            const title = document.getElementById('task-title-input').value.trim();
-            const date = document.getElementById('task-date-input').value;
-
-            appState.tasks.push({ id: 't_' + Date.now(), subject, title, date, done: false });
-            saveState();
-            renderTasks();
-            closeModal('task-modal');
-            showToast("Feladat hozzáadva!", "success");
-        }
-
-        function toggleTaskDone(id) {
-            if (!isAdmin) return;
-            const task = appState.tasks.find(t => t.id === id);
-            if (task) {
-                task.done = !task.done;
-                saveState();
-                renderTasks();
-            }
-        }
-
-        function deleteTask(id) {
-            if (!isAdmin) return;
-            appState.tasks = appState.tasks.filter(t => t.id !== id);
-            saveState();
-            renderTasks();
-            showToast("Feladat törölve.", "info");
-        }
-
-        // Esemény Szerkesztése
-        function openEventModal() {
-            if (!isAdmin) return;
-            document.getElementById('event-title-input').value = appState.eventCountdown.title;
-            document.getElementById('event-date-input').value = appState.eventCountdown.date;
-            openModal('event-modal');
-        }
-
-        function handleSaveEvent(e) {
-            e.preventDefault();
-            appState.eventCountdown.title = document.getElementById('event-title-input').value.trim();
-            appState.eventCountdown.date = document.getElementById('event-date-input').value;
-            saveState();
-            updateTimers();
-            closeModal('event-modal');
-            showToast("Visszaszámláló cél elmentve!", "success");
-        }
-
-        // Csengetési Rend Szerkesztése
-        function openScheduleModal() {
-            renderScheduleEditor();
-            openModal('schedule-modal');
-        }
-
-        function renderScheduleEditor() {
-            const container = document.getElementById('schedule-editor-list');
-            container.innerHTML = appState.schedule.map((s, idx) => `
-                <div class="flex items-center gap-2 bg-slate-900/60 p-2 rounded-xl border border-slate-700/50">
-                    <input type="text" value="${escapeHtml(s.name)}" ${!isAdmin ? 'readonly' : ''} id="sch-name-${idx}" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100">
-                    <input type="time" value="${s.start}" ${!isAdmin ? 'readonly' : ''} id="sch-start-${idx}" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-100">
-                    <span class="text-xs text-slate-500">-</span>
-                    <input type="time" value="${s.end}" ${!isAdmin ? 'readonly' : ''} id="sch-end-${idx}" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-100">
-                    ${isAdmin ? `
-                        <button onclick="deleteScheduleRow(${idx})" class="text-slate-500 hover:text-rose-400 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
-                    ` : ''}
-                </div>
-            `).join('');
-        }
-
-        function addScheduleRow() {
-            if (!isAdmin) return;
-            appState.schedule.push({ id: Date.now().toString(), name: "Új Óra", start: "13:30", end: "14:15" });
-            renderScheduleEditor();
-        }
-
-        function deleteScheduleRow(idx) {
-            if (!isAdmin) return;
-            appState.schedule.splice(idx, 1);
-            renderScheduleEditor();
-        }
-
-        function saveScheduleChanges() {
-            if (!isAdmin) return;
-            appState.schedule.forEach((s, idx) => {
-                const nameEl = document.getElementById(`sch-name-${idx}`);
-                const startEl = document.getElementById(`sch-start-${idx}`);
-                const endEl = document.getElementById(`sch-end-${idx}`);
-                if (nameEl && startEl && endEl) {
-                    s.name = nameEl.value.trim();
-                    s.start = startEl.value;
-                    s.end = endEl.value;
-                }
-            });
-            saveState();
-            updateTimers();
-            closeModal('schedule-modal');
-            showToast("Csengetési rend elmentve!", "success");
-        }
-
-        // =========================================================
-        // 6. ADAT EXPORT / IMPORT / RESET
-        // =========================================================
-        function toggleDataMenu() {
-            document.getElementById('data-menu').classList.toggle('hidden');
-        }
-
-        function closeDataMenu() {
-            document.getElementById('data-menu').classList.add('hidden');
-        }
-
-        function openExportModal() {
-            closeDataMenu();
-            document.getElementById('export-json-textarea').value = JSON.stringify(appState, null, 2);
-            openModal('export-modal');
-        }
-
-        function copyExportJson() {
-            const textarea = document.getElementById('export-json-textarea');
-            textarea.select();
-            document.execCommand('copy');
-            showToast("JSON kód a vágólapra másolva!", "success");
-        }
-
-        function downloadExportJson() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `sulidash-mentes-${new Date().toISOString().slice(0,10)}.json`);
-            document.body.appendChild(dlAnchorElem);
-            dlAnchorElem.click();
-            dlAnchorElem.remove();
-            showToast("JSON fájl letöltve!", "success");
-        }
-
-        function openImportModal() {
-            closeDataMenu();
-            document.getElementById('import-json-textarea').value = '';
-            openModal('import-modal');
-        }
-
-        function handleImportJson() {
-            const raw = document.getElementById('import-json-textarea').value.trim();
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.counters && parsed.schedule) {
-                    appState = parsed;
-                    saveState();
-                    updateAdminUI();
-                    updateTimers();
-                    closeModal('import-modal');
-                    showToast("Adatok sikeresen beolvasva!", "success");
-                } else {
-                    showToast("Érvénytelen JSON struktúra!", "error");
-                }
-            } catch (e) {
-                showToast("Érvénytelen JSON formátum!", "error");
-            }
-        }
-
-        function openResetModal() {
-            closeDataMenu();
-            openModal('reset-modal');
-        }
-
-        function executeReset() {
-            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
-            saveState();
-            updateAdminUI();
-            updateTimers();
-            closeModal('reset-modal');
-            showToast("Adatok visszaállítva az alapértelmezettre.", "info");
-        }
-
-        // =========================================================
-        // 7. SEGÉDFUNKCIÓK (TÉMA, MODAL, TOAST)
-        // =========================================================
-        function toggleTheme() {
-            const html = document.documentElement;
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                appState.theme = 'light';
-            } else {
-                html.classList.add('dark');
-                appState.theme = 'dark';
-            }
-            saveState();
-        }
-
-        function applySavedTheme() {
-            if (appState.theme === 'light') {
-                document.documentElement.classList.remove('dark');
-            } else {
-                document.documentElement.classList.add('dark');
-            }
-        }
-
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        function showToast(msg, type = "info") {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-sky-600';
-            toast.className = `${bgClass} text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 transform transition-all duration-300 translate-y-5 opacity-0 pointer-events-auto`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${escapeHtml(msg)}</span>`;
-            
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.remove('translate-y-5', 'opacity-0');
-            }, 10);
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-5');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function escapeHtml(str) {
-            return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        }
-
-        // =========================================================
-        // 8. INICIALIZÁLÁS WINDOW ONLOAD-RA
-        // =========================================================
-        window.onload = function () {
-            loadState();
-            applySavedTheme();
-            updateAdminUI();
-            
-            // Órák és számlálók elindítása
-            setInterval(updateTimers, 1000);
-            updateTimers();
-
-            // Kattintás kívülre -> Dropdown bezárás
-            window.addEventListener('click', (e) => {
-                const wrapper = document.getElementById('data-mgmt-wrapper');
-                if (wrapper && !wrapper.contains(e.target)) {
-                    closeDataMenu();
-                }
-            });
-        };
-    </script>
+    <!-- JavaScript hivatkozás -->
+    <script src="script.js"></script>
 </body>
 </html>
